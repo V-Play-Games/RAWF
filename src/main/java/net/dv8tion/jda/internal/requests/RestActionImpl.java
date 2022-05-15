@@ -16,7 +16,6 @@
 
 package net.dv8tion.jda.internal.requests;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.Request;
@@ -25,7 +24,6 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.RestFuture;
 import net.dv8tion.jda.api.utils.data.DataArray;
 import net.dv8tion.jda.api.utils.data.DataObject;
-import net.dv8tion.jda.internal.JDAImpl;
 import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.JDALogger;
 import okhttp3.RequestBody;
@@ -59,7 +57,7 @@ public class RestActionImpl<T> implements RestAction<T>
     protected static boolean passContext = true;
     protected static long defaultTimeout = 0;
 
-    protected final JDAImpl api;
+//    protected final JDAImpl api;
 
     private final Route.CompiledRoute route;
     private final RequestBody data;
@@ -111,37 +109,37 @@ public class RestActionImpl<T> implements RestAction<T>
         return DEFAULT_SUCCESS;
     }
 
-    public RestActionImpl(JDA api, Route.CompiledRoute route)
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route)
     {
-        this(api, route, (RequestBody) null, null);
+        this(route, (RequestBody) null, null);
     }
 
-    public RestActionImpl(JDA api, Route.CompiledRoute route, DataObject data)
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, DataObject data)
     {
-        this(api, route, data, null);
+        this(route, data, null);
     }
 
-    public RestActionImpl(JDA api, Route.CompiledRoute route, RequestBody data)
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, RequestBody data)
     {
-        this(api, route, data, null);
+        this(route, data, null);
     }
 
-    public RestActionImpl(JDA api, Route.CompiledRoute route, BiFunction<Response, Request<T>, T> handler)
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, BiFunction<Response, Request<T>, T> handler)
     {
-        this(api, route, (RequestBody) null, handler);
+        this(route, (RequestBody) null, handler);
     }
 
-    @SuppressWarnings("deprecation")
-    public RestActionImpl(JDA api, Route.CompiledRoute route, DataObject data, BiFunction<Response, Request<T>, T> handler)
+//    @SuppressWarnings("deprecation")
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, DataObject data, BiFunction<Response, Request<T>, T> handler)
     {
-        this(api, route, data == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, data.toJson()), handler);
+        this(route, data == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, data.toJson()), handler);
         this.rawData = data;
     }
 
-    public RestActionImpl(JDA api, Route.CompiledRoute route, RequestBody data, BiFunction<Response, Request<T>, T> handler)
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, RequestBody data, BiFunction<Response, Request<T>, T> handler)
     {
-        Checks.notNull(api, "api");
-        this.api = (JDAImpl) api;
+//        Checks.notNull(api, "api");
+//        this.api = (JDAImpl) api;
         this.route = route;
         this.data = data;
         this.handler = handler;
@@ -153,12 +151,12 @@ public class RestActionImpl<T> implements RestAction<T>
         return this;
     }
 
-    @Nonnull
-    @Override
-    public JDA getJDA()
-    {
-        return api;
-    }
+//    @Nonnull
+//    @Override
+//    public JDA getJDA()
+//    {
+//        return api;
+//    }
 
     @Nonnull
     @Override
@@ -195,7 +193,7 @@ public class RestActionImpl<T> implements RestAction<T>
             success = DEFAULT_SUCCESS;
         if (failure == null)
             failure = DEFAULT_FAILURE;
-        api.getRequester().request(new Request<>(this, success, failure, finisher, true, data, rawData, getDeadline(), priority, route, headers));
+//        api.getRequester().request(new Request<>(this, success, failure, finisher, true, data, rawData, getDeadline(), priority, route, headers));
     }
 
     @Nonnull

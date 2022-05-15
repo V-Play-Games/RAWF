@@ -100,7 +100,7 @@ public class BotRateLimiter extends RateLimiter
 
     private ScheduledExecutorService getScheduler()
     {
-        return requester.getJDA().getRateLimitPool();
+        return /*requester.getJDA().getRateLimitPool()*/null;
     }
 
     @Override
@@ -257,13 +257,13 @@ public class BotRateLimiter extends RateLimiter
                     // Handle global rate limit if necessary
                     if (global)
                     {
-                        requester.getJDA().getSessionController().setGlobalRatelimit(now + retryAfter);
+//                        requester.getJDA().getSessionController().setGlobalRatelimit(now + retryAfter);
                         log.error("Encountered global rate limit! Retry-After: {} ms", retryAfter);
                     }
                     // Handle cloudflare rate limits, this applies to all routes and uses seconds for retry-after
                     else if (cloudflare)
                     {
-                        requester.getJDA().getSessionController().setGlobalRatelimit(now + retryAfter);
+//                        requester.getJDA().getSessionController().setGlobalRatelimit(now + retryAfter);
                         log.error("Encountered cloudflare rate limit! Retry-After: {} s", retryAfter / 1000);
                     }
                     // Handle hard rate limit, pretty much just log that it happened
@@ -295,10 +295,10 @@ public class BotRateLimiter extends RateLimiter
 
                 bucket.limit = (int) Math.max(1L, parseLong(limitHeader));
                 bucket.remaining = (int) parseLong(remainingHeader);
-                if (requester.getJDA().isRelativeRateLimit())
-                    bucket.reset = now + parseDouble(resetAfterHeader);
-                else
-                    bucket.reset = parseDouble(resetHeader);
+//                if (requester.getJDA().isRelativeRateLimit())
+//                    bucket.reset = now + parseDouble(resetAfterHeader);
+//                else
+//                    bucket.reset = parseDouble(resetHeader);
                 log.trace("Updated bucket {} to ({}/{}, {})", bucket.bucketId, bucket.remaining, bucket.limit, bucket.reset - now);
                 return bucket;
             }
@@ -383,13 +383,13 @@ public class BotRateLimiter extends RateLimiter
 
         private boolean isGlobalRateLimit()
         {
-            return requester.getJDA().getSessionController().getGlobalRatelimit() > getNow();
+            return /*requester.getJDA().getSessionController().getGlobalRatelimit() > getNow()*/ false;
         }
 
         public long getRateLimit()
         {
             long now = getNow();
-            long global = requester.getJDA().getSessionController().getGlobalRatelimit();
+            long global = /*requester.getJDA().getSessionController().getGlobalRatelimit()*/0;
             // Global rate limit is more important to handle
             if (global > now)
                 return global - now;
@@ -434,8 +434,8 @@ public class BotRateLimiter extends RateLimiter
                     runBucket(this);
                 else if (isStopped)
                     buckets.remove(bucketId);
-                if (isStopped && buckets.isEmpty())
-                    requester.getJDA().shutdownRequester();
+//                if (isStopped && buckets.isEmpty())
+//                    requester.getJDA().shutdownRequester();
             });
         }
 

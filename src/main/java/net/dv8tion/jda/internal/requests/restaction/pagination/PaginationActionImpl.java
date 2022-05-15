@@ -16,7 +16,6 @@
 
 package net.dv8tion.jda.internal.requests.restaction.pagination;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.requests.restaction.pagination.PaginationAction;
 import net.dv8tion.jda.api.utils.Procedure;
 import net.dv8tion.jda.internal.requests.RestActionImpl;
@@ -52,8 +51,6 @@ public abstract class PaginationActionImpl<T, M extends PaginationAction<T, M>>
     /**
      * Creates a new PaginationAction instance
      *
-     * @param api
-     *        The current JDA instance
      * @param route
      *        The base route
      * @param maxLimit
@@ -63,9 +60,9 @@ public abstract class PaginationActionImpl<T, M extends PaginationAction<T, M>>
      * @param initialLimit
      *        The initial limit to use on the pagination endpoint
      */
-    public PaginationActionImpl(JDA api, Route.CompiledRoute route, int minLimit, int maxLimit, int initialLimit)
+    public PaginationActionImpl(/*JDA api,*/ Route.CompiledRoute route, int minLimit, int maxLimit, int initialLimit)
     {
-        super(api, route);
+        super(route);
         this.maxLimit = maxLimit;
         this.minLimit = minLimit;
         this.limit = new AtomicInteger(initialLimit);
@@ -76,12 +73,10 @@ public abstract class PaginationActionImpl<T, M extends PaginationAction<T, M>>
      * <br>This is used for PaginationActions that should not deal with
      * {@link #limit(int)}
      *
-     * @param api
-     *        The current JDA instance
      */
-    public PaginationActionImpl(JDA api)
+    public PaginationActionImpl(/*JDA api*/)
     {
-        super(api, null);
+        super(null);
         this.maxLimit = 0;
         this.minLimit = 0;
         this.limit = new AtomicInteger(0);

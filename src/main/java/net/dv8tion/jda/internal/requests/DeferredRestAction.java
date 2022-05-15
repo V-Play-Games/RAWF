@@ -16,10 +16,8 @@
 
 package net.dv8tion.jda.internal.requests;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 import net.dv8tion.jda.internal.utils.Checks;
 
 import javax.annotation.Nonnull;
@@ -30,9 +28,9 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class DeferredRestAction<T, R extends RestAction<T>> implements AuditableRestAction<T>
+public class DeferredRestAction<T, R extends RestAction<T>> implements RestAction<T>
 {
-    private final JDA api;
+//    private final JDA api;
     private final Class<T> type;
     private final Supplier<T> valueSupplier;
     private final Supplier<R> actionSupplier;
@@ -42,39 +40,31 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements Auditable
     private BooleanSupplier isAction;
     private BooleanSupplier transitiveChecks;
 
-    public DeferredRestAction(JDA api, Supplier<R> actionSupplier)
+    public DeferredRestAction(/*JDA api,*/ Supplier<R> actionSupplier)
     {
-        this(api, null, null, actionSupplier);
+        this(null, null, actionSupplier);
     }
 
-    public DeferredRestAction(JDA api, Class<T> type,
+    public DeferredRestAction(/*JDA api,*/ Class<T> type,
                               Supplier<T> valueSupplier,
                               Supplier<R> actionSupplier)
     {
-        this.api = api;
+//        this.api = api;
         this.type = type;
         this.valueSupplier = valueSupplier;
         this.actionSupplier = actionSupplier;
     }
 
-    @Nonnull
-    @Override
-    public JDA getJDA()
-    {
-        return api;
-    }
+//    @Nonnull
+//    @Override
+//    public JDA getJDA()
+//    {
+//        return api;
+//    }
 
     @Nonnull
     @Override
-    public AuditableRestAction<T> reason(String reason)
-    {
-        this.reason = reason;
-        return this;
-    }
-
-    @Nonnull
-    @Override
-    public AuditableRestAction<T> setCheck(BooleanSupplier checks)
+    public RestAction<T> setCheck(BooleanSupplier checks)
     {
         this.transitiveChecks = checks;
         return this;
@@ -89,7 +79,7 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements Auditable
 
     @Nonnull
     @Override
-    public AuditableRestAction<T> timeout(long timeout, @Nonnull TimeUnit unit)
+    public RestAction<T> timeout(long timeout, @Nonnull TimeUnit unit)
     {
         Checks.notNull(unit, "TimeUnit");
         return deadline(timeout <= 0 ? 0 : System.currentTimeMillis() + unit.toMillis(timeout));
@@ -97,13 +87,13 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements Auditable
 
     @Nonnull
     @Override
-    public AuditableRestAction<T> deadline(long timestamp)
+    public RestAction<T> deadline(long timestamp)
     {
         this.deadline = timestamp;
         return this;
     }
 
-    public AuditableRestAction<T> setCacheCheck(BooleanSupplier checks)
+    public RestAction<T> setCacheCheck(BooleanSupplier checks)
     {
         this.isAction = checks;
         return this;
@@ -178,8 +168,8 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements Auditable
         action.setCheck(transitiveChecks);
         if (deadline >= 0)
             action.deadline(deadline);
-        if (action instanceof AuditableRestAction && reason != null)
-            ((AuditableRestAction<?>) action).reason(reason);
+//        if (action instanceof AuditableRestAction && reason != null)
+//            ((AuditableRestAction<?>) action).reason(reason);
         return action;
     }
 }

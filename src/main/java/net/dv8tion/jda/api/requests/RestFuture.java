@@ -16,7 +16,6 @@
 
 package net.dv8tion.jda.api.requests;
 
-import net.dv8tion.jda.internal.JDAImpl;
 import net.dv8tion.jda.internal.requests.RestActionImpl;
 import net.dv8tion.jda.internal.requests.Route;
 import okhttp3.RequestBody;
@@ -35,7 +34,7 @@ public class RestFuture<T> extends CompletableFuture<T>
     {
         this.request = new Request<>(restAction, this::complete, this::completeExceptionally,
                                      checks, shouldQueue, data, rawData, deadline, priority, route, headers);
-        ((JDAImpl) restAction.getJDA()).getRequester().request(this.request);
+//        ((JDAImpl) restAction.getJDA()).getRequester().request(this.request);
     }
 
     public RestFuture(final T t)

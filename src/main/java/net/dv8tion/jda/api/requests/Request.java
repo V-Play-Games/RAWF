@@ -16,13 +16,9 @@
 
 package net.dv8tion.jda.api.requests;
 
-import net.dv8tion.jda.api.audit.ThreadLocalReason;
-import net.dv8tion.jda.api.events.ExceptionEvent;
-import net.dv8tion.jda.api.events.http.HttpRequestEvent;
 import net.dv8tion.jda.api.exceptions.ContextException;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
-import net.dv8tion.jda.internal.JDAImpl;
 import net.dv8tion.jda.internal.requests.CallbackContext;
 import net.dv8tion.jda.internal.requests.RestActionImpl;
 import net.dv8tion.jda.internal.requests.Route;
@@ -38,7 +34,6 @@ import java.util.function.Consumer;
 
 public class Request<T>
 {
-    private final JDAImpl api;
     private final RestActionImpl<T> restAction;
     private final Consumer<? super T> onSuccess;
     private final Consumer<? super Throwable> onFailure;
@@ -51,7 +46,7 @@ public class Request<T>
     private final long deadline;
     private final boolean priority;
 
-    private final String localReason;
+//    private final String localReason;
 
     private boolean done = false;
     private boolean isCancelled = false;
@@ -78,8 +73,7 @@ public class Request<T>
         this.route = route;
         this.headers = headers;
 
-        this.api = (JDAImpl) restAction.getJDA();
-        this.localReason = ThreadLocalReason.getCurrent();
+//        this.api = (JDAImpl) restAction.getJDA();
     }
 
     public void onSuccess(T successObj)
@@ -87,10 +81,9 @@ public class Request<T>
         if (done)
             return;
         done = true;
-        api.getCallbackPool().execute(() ->
+        /*api.getCallbackPool().execute(() ->
         {
-            try (ThreadLocalReason.Closable __ = ThreadLocalReason.closable(localReason);
-                 CallbackContext ___ = CallbackContext.getInstance())
+            try (CallbackContext ___ = CallbackContext.getInstance())
             {
                 onSuccess.accept(successObj);
             }
@@ -99,11 +92,11 @@ public class Request<T>
                 RestActionImpl.LOG.error("Encountered error while processing success consumer", t);
                 if (t instanceof Error)
                 {
-                    api.handleEvent(new ExceptionEvent(api, t, true));
+//                    api.handleEvent(new ExceptionEvent(api, t, true));
                     throw (Error) t;
                 }
             }
-        });
+        });*/
     }
 
     public void onFailure(Response response)
@@ -124,25 +117,24 @@ public class Request<T>
         if (done)
             return;
         done = true;
-        api.getCallbackPool().execute(() ->
+        /*api.getCallbackPool().execute(() ->
         {
-            try (ThreadLocalReason.Closable __ = ThreadLocalReason.closable(localReason);
-                 CallbackContext ___ = CallbackContext.getInstance())
+            try (CallbackContext ___ = CallbackContext.getInstance())
             {
                 onFailure.accept(failException);
-                if (failException instanceof Error)
-                    api.handleEvent(new ExceptionEvent(api, failException, false));
+//                if (failException instanceof Error)
+//                    api.handleEvent(new ExceptionEvent(api, failException, false));
             }
             catch (Throwable t)
             {
                 RestActionImpl.LOG.error("Encountered error while processing failure consumer", t);
                 if (t instanceof Error)
                 {
-                    api.handleEvent(new ExceptionEvent(api, t, true));
+//                    api.handleEvent(new ExceptionEvent(api, t, true));
                     throw (Error) t;
                 }
             }
-        });
+        });*/
     }
 
     public void onCancelled()
@@ -155,11 +147,6 @@ public class Request<T>
         onFailure(new TimeoutException("RestAction has timed out"));
     }
 
-    @Nonnull
-    public JDAImpl getJDA()
-    {
-        return api;
-    }
 
     @Nonnull
     public RestAction<T> getRestAction()
@@ -257,6 +244,6 @@ public class Request<T>
     public void handleResponse(@Nonnull Response response)
     {
         restAction.handleResponse(response, this);
-        api.handleEvent(new HttpRequestEvent(this, response));
+//        api.handleEvent(new HttpRequestEvent(this, response));
     }
 }

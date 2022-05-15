@@ -16,11 +16,8 @@
 
 package net.dv8tion.jda.internal.requests;
 
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDAInfo;
 import net.dv8tion.jda.api.requests.Request;
 import net.dv8tion.jda.api.requests.Response;
-import net.dv8tion.jda.internal.JDAImpl;
 import net.dv8tion.jda.internal.requests.ratelimit.BotRateLimiter;
 import net.dv8tion.jda.internal.utils.Helpers;
 import net.dv8tion.jda.internal.utils.JDALogger;
@@ -48,14 +45,14 @@ import java.util.concurrent.RejectedExecutionException;
 public class Requester
 {
     public static final Logger LOG = JDALogger.getLog(Requester.class);
-    public static final String DISCORD_API_PREFIX = Helpers.format("https://discord.com/api/v%d/", JDAInfo.DISCORD_REST_VERSION);
-    public static final String USER_AGENT = "DiscordBot (" + JDAInfo.GITHUB + ", " + JDAInfo.VERSION + ")";
+    public static final String DISCORD_API_PREFIX = Helpers.format("https://discord.com/api/v%d/"/*, JDAInfo.DISCORD_REST_VERSION*/);
+    public static final String USER_AGENT = "DiscordBot (" /*+ JDAInfo.GITHUB + ", " + JDAInfo.VERSION*/ + ")";
     @SuppressWarnings("deprecation")
     public static final RequestBody EMPTY_BODY = RequestBody.create(null, new byte[0]);
     public static final MediaType MEDIA_TYPE_JSON  = MediaType.parse("application/json; charset=utf-8");
     public static final MediaType MEDIA_TYPE_OCTET = MediaType.parse("application/octet-stream; charset=utf-8");
 
-    protected final JDAImpl api;
+//    protected final JDAImpl api;
     protected final AuthorizationConfig authConfig;
     private final RateLimiter rateLimiter;
 
@@ -67,20 +64,20 @@ public class Requester
 
     private volatile boolean retryOnTimeout = false;
 
-    public Requester(JDA api)
+    public Requester(/*JDA api*/)
     {
-        this(api, ((JDAImpl) api).getAuthorizationConfig());
+        this(null);
     }
 
-    public Requester(JDA api, AuthorizationConfig authConfig)
+    public Requester(/*JDA api,*/ AuthorizationConfig authConfig)
     {
         if (authConfig == null)
             throw new NullPointerException("Provided config was null!");
 
         this.authConfig = authConfig;
-        this.api = (JDAImpl) api;
+//        this.api = (JDAImpl) api;
         this.rateLimiter = new BotRateLimiter(this);
-        this.httpClient = this.api.getHttpClient();
+        this.httpClient = /*this.api.getHttpClient()*/null;
     }
 
     public void setContextReady(boolean ready)
@@ -92,15 +89,15 @@ public class Requester
     {
         if (!isContextReady)
             return;
-        if (contextMap == null)
-            contextMap = api.getContextMap();
+//        if (contextMap == null)
+//            contextMap = api.getContextMap();
         contextMap.forEach(MDC::put);
     }
 
-    public JDAImpl getJDA()
-    {
-        return api;
-    }
+//    public JDAImpl getJDA()
+//    {
+//        return api;
+//    }
 
     public <T> void request(Request<T> apiRequest)
     {
@@ -171,8 +168,8 @@ public class Requester
 
         //adding token to all requests to the discord api or cdn pages
         //we can check for startsWith(DISCORD_API_PREFIX) because the cdn endpoints don't need any kind of authorization
-        if (url.startsWith(DISCORD_API_PREFIX))
-            builder.header("authorization", api.getToken());
+//        if (url.startsWith(DISCORD_API_PREFIX))
+//            builder.header("authorization", api.getToken());
 
         // Apply custom headers like X-Audit-Log-Reason
         // If customHeaders is null this does nothing
