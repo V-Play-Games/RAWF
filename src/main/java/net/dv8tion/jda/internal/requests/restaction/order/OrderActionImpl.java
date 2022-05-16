@@ -201,7 +201,6 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
 
     @Nonnull
     @Override
-    @SuppressWarnings("unchecked")
     public M swapPosition(@Nonnull T swapEntity) {
         Checks.notNull(swapEntity, "Provided swapEntity");
         validateInput(swapEntity);

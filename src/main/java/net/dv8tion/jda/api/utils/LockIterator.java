@@ -80,13 +80,4 @@ public class LockIterator<T> implements ClosableIterator<T> {
             throw new NoSuchElementException();
         return it.next();
     }
-
-    @Override
-    @Deprecated //Deprecated in Java 9 because the finalization system is being changed/removed
-    protected void finalize() {
-        if (lock != null) {
-            log.error("Finalizing without closing, performing force close on lock");
-            close();
-        }
-    }
 }

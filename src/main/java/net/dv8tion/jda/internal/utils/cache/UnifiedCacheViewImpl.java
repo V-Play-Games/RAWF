@@ -81,10 +81,10 @@ public class UnifiedCacheViewImpl<T, E extends CacheView<T>> implements CacheVie
     @Nonnull
     @Override
     public List<T> getElementsByName(@Nonnull String name, boolean ignoreCase) {
-        return Collections.unmodifiableList(distinctStream()
+        return distinctStream()
             .flatMap(view -> view.getElementsByName(name, ignoreCase).stream())
             .distinct()
-            .collect(Collectors.toList()));
+            .collect(Collectors.toUnmodifiableList());
     }
 
     @Nonnull

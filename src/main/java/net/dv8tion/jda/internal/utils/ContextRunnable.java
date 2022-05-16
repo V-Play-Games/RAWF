@@ -33,15 +33,11 @@ public class ContextRunnable<E> implements Runnable, Callable<E> {
 
     @Override
     public void run() {
-        {
-            runnable.run();
-        }
+        runnable.run();
     }
 
     @Override
     public E call() throws Exception {
-        {
-            return callable.call();
-        }
+        return callable.call();
     }
 }

@@ -18,6 +18,7 @@ package net.dv8tion.jda.internal.requests;
 import net.dv8tion.jda.api.requests.Request;
 import net.dv8tion.jda.api.requests.Response;
 import net.dv8tion.jda.internal.requests.ratelimit.BotRateLimiter;
+import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.Helpers;
 import net.dv8tion.jda.internal.utils.JDALogger;
 import net.dv8tion.jda.internal.utils.config.AuthorizationConfig;
@@ -45,7 +46,6 @@ public class Requester {
     public static final Logger LOG = JDALogger.getLog(Requester.class);
     public static final String DISCORD_API_PREFIX = Helpers.format("https://discord.com/api/v%d/"/*, JDAInfo.DISCORD_REST_VERSION*/);
     public static final String USER_AGENT = "DiscordBot (" /*+ JDAInfo.GITHUB + ", " + JDAInfo.VERSION*/ + ")";
-    @SuppressWarnings("deprecation")
     public static final RequestBody EMPTY_BODY = RequestBody.create(null, new byte[0]);
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     public static final MediaType MEDIA_TYPE_OCTET = MediaType.parse("application/octet-stream; charset=utf-8");
@@ -67,8 +67,7 @@ public class Requester {
     }
 
     public Requester(/*JDA api,*/ AuthorizationConfig authConfig) {
-        if (authConfig == null)
-            throw new NullPointerException("Provided config was null!");
+        Checks.notNull(authConfig, "Authorization Config");
 
         this.authConfig = authConfig;
 //        this.api = (JDAImpl) api;
@@ -169,7 +168,7 @@ public class Requester {
         okhttp3.Response[] responses = new okhttp3.Response[4];
         // we have an array of all responses to later close them all at once
         //the response below this comment is used as the first successful response from the server
-        okhttp3.Response lastResponse = null;
+        okhttp3.Response lastResponse;
         try {
             LOG.trace("Executing request {} {}", apiRequest.getRoute().getMethod(), url);
             int attempt = 0;
@@ -192,7 +191,8 @@ public class Requester {
                     apiRequest.getRoute().getMethod(),
                     url, lastResponse.code(), attempt);
                 try {
-                    Thread.sleep(50 * attempt);
+                    //noinspection BusyWait
+                    Thread.sleep(50L * attempt);
                 } catch (InterruptedException ignored) {
                 }
             }

@@ -15,7 +15,6 @@
  */
 package net.dv8tion.jda.internal.utils;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;

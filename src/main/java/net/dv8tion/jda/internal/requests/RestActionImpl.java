@@ -224,14 +224,12 @@ public class RestActionImpl<T> implements RestAction<T> {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     protected RequestBody getRequestBody(DataObject object) {
         this.rawData = object;
 
         return object == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, object.toJson());
     }
 
-    @SuppressWarnings("deprecation")
     protected RequestBody getRequestBody(DataArray array) {
         this.rawData = array;
 

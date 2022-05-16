@@ -37,7 +37,7 @@ public class MiscUtil {
      * @return a new thread-safe {@link gnu.trove.map.TLongObjectMap TLongObjectMap}
      */
     public static <T> TLongObjectMap<T> newLongMap() {
-        return new TSynchronizedLongObjectMap<>(new TLongObjectHashMap<T>(), new Object());
+        return new TSynchronizedLongObjectMap<>(new TLongObjectHashMap<>(), new Object());
     }
 
     public static long parseLong(String input) {

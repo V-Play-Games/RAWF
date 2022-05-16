@@ -41,7 +41,7 @@ public class JDALogger {
     private static final Map<String, Logger> LOGS = new CaseInsensitiveMap<>();
 
     static {
-        boolean tmp = false;
+        boolean tmp;
 
         try {
             Class.forName("org.slf4j.impl.StaticLoggerBinder");

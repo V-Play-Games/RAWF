@@ -22,7 +22,6 @@ import org.slf4j.helpers.Util;
 import org.slf4j.spi.LocationAwareLogger;
 
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.security.AccessController;
@@ -33,7 +32,6 @@ import java.util.Date;
 import java.util.Properties;
 
 class SimpleLogger extends MarkerIgnoringBase {
-
     public static final String SYSTEM_PREFIX = "org.slf4j.Loggerger.";
     public static final String DEFAULT_LOG_LEVEL_KEY = SYSTEM_PREFIX + "defaultLogLevel";
     public static final String SHOW_DATE_TIME_KEY = SYSTEM_PREFIX + "showDateTime";
@@ -66,7 +64,7 @@ class SimpleLogger extends MarkerIgnoringBase {
     private static PrintStream TARGET_STREAM = null;
     private static boolean LEVEL_IN_BRACKETS = false;
     private static String WARN_LEVEL_STRING = "WARN";
-    protected int currentLogLevel = LOG_LEVEL_INFO;
+    protected int currentLogLevel;
     private transient String shortLogName = null;
 
     SimpleLogger(String name) {
@@ -138,9 +136,7 @@ class SimpleLogger extends MarkerIgnoringBase {
             return System.out;
         } else {
             try {
-                FileOutputStream fos = new FileOutputStream(logFile);
-                PrintStream printStream = new PrintStream(fos);
-                return printStream;
+                return new PrintStream(logFile);
             } catch (FileNotFoundException e) {
                 Util.report("Could not open [" + logFile + "]. Defaulting to System.err", e);
                 return System.err;
@@ -150,14 +146,12 @@ class SimpleLogger extends MarkerIgnoringBase {
 
     private static void loadProperties() {
         // Add props from the resource Loggerger.properties
-        InputStream in = AccessController.doPrivileged(new PrivilegedAction<InputStream>() {
-            public InputStream run() {
-                ClassLoader threadCL = Thread.currentThread().getContextClassLoader();
-                if (threadCL != null) {
-                    return threadCL.getResourceAsStream(CONFIGURATION_FILE);
-                } else {
-                    return ClassLoader.getSystemResourceAsStream(CONFIGURATION_FILE);
-                }
+        InputStream in = AccessController.doPrivileged((PrivilegedAction<InputStream>) () -> {
+            ClassLoader threadCL = Thread.currentThread().getContextClassLoader();
+            if (threadCL != null) {
+                return threadCL.getResourceAsStream(CONFIGURATION_FILE);
+            } else {
+                return ClassLoader.getSystemResourceAsStream(CONFIGURATION_FILE);
             }
         });
         if (null != in) {
@@ -272,12 +266,7 @@ class SimpleLogger extends MarkerIgnoringBase {
     }
 
     private String getFormattedDate() {
-        Date now = new Date();
-        String dateText;
-        synchronized (DATE_FORMATTER) {
-            dateText = DATE_FORMATTER.format(now);
-        }
-        return dateText;
+        return DATE_FORMATTER.format(new Date());
     }
 
     private String computeShortName() {

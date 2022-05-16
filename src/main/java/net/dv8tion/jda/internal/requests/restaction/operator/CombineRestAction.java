@@ -134,10 +134,11 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O> {
         try {
             return submit(true).join();
         } catch (CompletionException e) {
-            if (e.getCause() instanceof RuntimeException)
-                throw (RuntimeException) e.getCause();
-            else if (e.getCause() instanceof RateLimitedException)
-                throw (RateLimitedException) e.getCause();
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException)
+                throw (RuntimeException) cause;
+            else if (cause instanceof RateLimitedException)
+                throw (RateLimitedException) cause;
             throw e;
         }
     }
