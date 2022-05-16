@@ -16,7 +16,7 @@
 
 package net.dv8tion.jda.api.utils.cache;
 
-import net.dv8tion.jda.api.entities.ISnowflake;
+//import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.utils.MiscUtil;
 
 import javax.annotation.Nonnull;
@@ -24,11 +24,11 @@ import javax.annotation.Nullable;
 
 /**
  * {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView} implementation
- * specifically to view {@link net.dv8tion.jda.api.entities.ISnowflake ISnowflake} implementations.
+ * specifically to view { net.dv8tion.jda.api.entities.ISnowflake ISnowflake} implementations.
  *
  * @see CacheView CacheView for details on Efficient Memory Usage
  */
-public interface SnowflakeCacheView<T extends ISnowflake> extends CacheView<T>
+public interface SnowflakeCacheView<T /*extends ISnowflake*/> extends CacheView<T>
 {
     /**
      * Retrieves the entity represented by the provided ID.

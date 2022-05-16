@@ -16,10 +16,8 @@
 
 package net.dv8tion.jda.internal.requests;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -28,61 +26,53 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public class CompletedRestAction<T> implements AuditableRestAction<T>
+public class CompletedRestAction<T> implements RestAction<T>
 {
-    private final JDA api;
+//    private final JDA api;
     private final T value;
     private final Throwable error;
 
-    public CompletedRestAction(JDA api, T value, Throwable error)
+    public CompletedRestAction(/*JDA api,*/ T value, Throwable error)
     {
-        this.api = api;
+//        this.api = api;
         this.value = value;
         this.error = error;
     }
 
-    public CompletedRestAction(JDA api, T value)
+    public CompletedRestAction(/*JDA api,*/ T value)
     {
-        this(api, value, null);
+        this(value, null);
     }
 
-    public CompletedRestAction(JDA api, Throwable error)
+    public CompletedRestAction(/*JDA api,*/ Throwable error)
     {
-        this(api, null, error);
+        this(null, error);
     }
 
+//    @Nonnull
+//    @Override
+//    public JDA getJDA()
+//    {
+//        return api;
+//    }
 
     @Nonnull
     @Override
-    public AuditableRestAction<T> reason(@Nullable String reason)
+    public CompletedRestAction<T> setCheck(@Nullable BooleanSupplier checks)
     {
         return this;
     }
 
     @Nonnull
     @Override
-    public JDA getJDA()
-    {
-        return api;
-    }
-
-    @Nonnull
-    @Override
-    public AuditableRestAction<T> setCheck(@Nullable BooleanSupplier checks)
+    public CompletedRestAction<T> timeout(long timeout, @Nonnull TimeUnit unit)
     {
         return this;
     }
 
     @Nonnull
     @Override
-    public AuditableRestAction<T> timeout(long timeout, @Nonnull TimeUnit unit)
-    {
-        return this;
-    }
-
-    @Nonnull
-    @Override
-    public AuditableRestAction<T> deadline(long timestamp)
+    public CompletedRestAction<T> deadline(long timestamp)
     {
         return this;
     }

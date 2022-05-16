@@ -18,7 +18,6 @@ package net.dv8tion.jda.api.utils;
 import gnu.trove.impl.sync.TSynchronizedLongObjectMap;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.Helpers;
 
@@ -32,63 +31,6 @@ import java.util.function.Supplier;
 
 public class MiscUtil
 {
-    /**
-     * Returns the shard id the given guild will be loaded on for the given amount of shards.
-     *
-     * Discord determines which guilds a shard is connect to using the following format:
-     * {@code shardId == (guildId >>> 22) % totalShards}
-     * <br>Source for formula: <a href="https://discord.com/developers/docs/topics/gateway#sharding">Discord Documentation</a>
-     *
-     * @param guildId
-     *        The guild id.
-     * @param shards
-     *        The amount of shards.
-     * 
-     * @return The shard id for the guild.
-     */
-    public static int getShardForGuild(long guildId, int shards)
-    {
-        return (int) ((guildId >>> 22) % shards);
-    }
-
-    /**
-     * Returns the shard id the given guild will be loaded on for the given amount of shards.
-     *
-     * Discord determines which guilds a shard is connect to using the following format:
-     * {@code shardId == (guildId >>> 22) % totalShards}
-     * <br>Source for formula: <a href="https://discord.com/developers/docs/topics/gateway#sharding">Discord Documentation</a>
-     *
-     * @param guildId
-     *        The guild id.
-     * @param shards
-     *        The amount of shards.
-     *
-     * @return The shard id for the guild.
-     */
-    public static int getShardForGuild(String guildId, int shards)
-    {
-        return getShardForGuild(parseSnowflake(guildId), shards);
-    }
-
-    /**
-     * Returns the shard id the given {@link net.dv8tion.jda.api.entities.Guild Guild} will be loaded on for the given amount of shards.
-     *
-     * Discord determines which guilds a shard is connect to using the following format:
-     * {@code shardId == (guildId >>> 22) % totalShards}
-     * <br>Source for formula: <a href="https://discord.com/developers/docs/topics/gateway#sharding">Discord Documentation</a>
-     *
-     * @param guild
-     *        The guild.
-     * @param shards
-     *        The amount of shards.
-     *
-     * @return The shard id for the guild.
-     */
-    public static int getShardForGuild(Guild guild, int shards)
-    {
-        return getShardForGuild(guild.getIdLong(), shards);
-    }
-
     /**
      * Generates a new thread-safe {@link gnu.trove.map.TLongObjectMap TLongObjectMap}
      *

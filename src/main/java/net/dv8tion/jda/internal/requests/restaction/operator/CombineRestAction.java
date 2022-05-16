@@ -16,7 +16,6 @@
 
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.MiscUtil;
@@ -50,13 +49,13 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O>
         action1.addCheck(checks);
         action2.addCheck(checks);
     }
-
-    @Nonnull
-    @Override
-    public JDA getJDA()
-    {
-        return action1.getJDA();
-    }
+//
+//    @Nonnull
+//    @Override
+//    public JDA getJDA()
+//    {
+//        return action1.getJDA();
+//    }
 
     @Nonnull
     @Override

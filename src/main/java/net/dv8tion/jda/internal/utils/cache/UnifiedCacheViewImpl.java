@@ -16,18 +16,11 @@
 
 package net.dv8tion.jda.internal.utils.cache;
 
-import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.utils.ClosableIterator;
 import net.dv8tion.jda.api.utils.cache.CacheView;
-import net.dv8tion.jda.api.utils.cache.MemberCacheView;
-import net.dv8tion.jda.api.utils.cache.SnowflakeCacheView;
-import net.dv8tion.jda.api.utils.cache.UnifiedMemberCacheView;
 import net.dv8tion.jda.internal.utils.ChainedClosableIterator;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -130,79 +123,5 @@ public class UnifiedCacheViewImpl<T, E extends CacheView<T>> implements CacheVie
     protected Stream<? extends E> distinctStream()
     {
         return generator.get().distinct();
-    }
-
-    public static class UnifiedSnowflakeCacheView<T extends ISnowflake>
-        extends UnifiedCacheViewImpl<T, SnowflakeCacheView<T>> implements SnowflakeCacheView<T>
-    {
-        public UnifiedSnowflakeCacheView(Supplier<? extends Stream<? extends SnowflakeCacheView<T>>> generator)
-        {
-            super(generator);
-        }
-
-        @Override
-        public T getElementById(long id)
-        {
-            return generator.get()
-                .map(view -> view.getElementById(id))
-                .filter(Objects::nonNull)
-                .findFirst().orElse(null);
-        }
-    }
-
-    public static class UnifiedMemberCacheViewImpl
-        extends UnifiedCacheViewImpl<Member, MemberCacheView> implements UnifiedMemberCacheView
-    {
-
-        public UnifiedMemberCacheViewImpl(Supplier<? extends Stream<? extends MemberCacheView>> generator)
-        {
-            super(generator);
-        }
-
-        @Nonnull
-        @Override
-        public List<Member> getElementsById(long id)
-        {
-            return Collections.unmodifiableList(distinctStream()
-                .map(view -> view.getElementById(id))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList()));
-        }
-
-        @Nonnull
-        @Override
-        public List<Member> getElementsByUsername(@Nonnull String name, boolean ignoreCase)
-        {
-            return Collections.unmodifiableList(distinctStream()
-                .flatMap(view -> view.getElementsByUsername(name, ignoreCase).stream())
-                .collect(Collectors.toList()));
-        }
-
-        @Nonnull
-        @Override
-        public List<Member> getElementsByNickname(@Nullable String name, boolean ignoreCase)
-        {
-            return Collections.unmodifiableList(distinctStream()
-                .flatMap(view -> view.getElementsByNickname(name, ignoreCase).stream())
-                .collect(Collectors.toList()));
-        }
-
-        @Nonnull
-        @Override
-        public List<Member> getElementsWithRoles(@Nonnull Role... roles)
-        {
-            return Collections.unmodifiableList(distinctStream()
-                .flatMap(view -> view.getElementsWithRoles(roles).stream())
-                .collect(Collectors.toList()));
-        }
-
-        @Nonnull
-        @Override
-        public List<Member> getElementsWithRoles(@Nonnull Collection<Role> roles)
-        {
-            return Collections.unmodifiableList(distinctStream()
-                .flatMap(view -> view.getElementsWithRoles(roles).stream())
-                .collect(Collectors.toList()));
-        }
     }
 }

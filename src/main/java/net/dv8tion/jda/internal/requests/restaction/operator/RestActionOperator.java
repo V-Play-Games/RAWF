@@ -16,7 +16,6 @@
 
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.exceptions.ContextException;
 import net.dv8tion.jda.api.requests.RestAction;
 
@@ -70,12 +69,12 @@ public abstract class RestActionOperator<I, O> implements RestAction<O>
         }, catcher);
     }
 
-    @Nonnull
-    @Override
-    public JDA getJDA()
-    {
-        return action.getJDA();
-    }
+//    @Nonnull
+//    @Override
+//    public JDA getJDA()
+//    {
+//        return action.getJDA();
+//    }
 
     @Nonnull
     @Override

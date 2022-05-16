@@ -119,7 +119,6 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @return The current PaginationAction for chaining convenience
      *
      * @see    java.util.concurrent.TimeUnit
-     * @see    net.dv8tion.jda.api.utils.TimeUtil
      */
     @Nonnull
     M skipTo(long id);

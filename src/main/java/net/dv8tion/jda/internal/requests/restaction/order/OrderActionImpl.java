@@ -16,7 +16,6 @@
 
 package net.dv8tion.jda.internal.requests.restaction.order;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.requests.restaction.order.OrderAction;
 import net.dv8tion.jda.internal.requests.RestActionImpl;
 import net.dv8tion.jda.internal.requests.Route;
@@ -41,33 +40,27 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     /**
      * Creates a new OrderAction instance
      *
-     * @param api
-     *        JDA instance which is associated with the entities contained
-     *        in the order list
      * @param route
      *        The {@link net.dv8tion.jda.internal.requests.Route.CompiledRoute CompiledRoute}
-     *        which is provided to the {@link RestActionImpl#RestActionImpl(JDA, Route.CompiledRoute, okhttp3.RequestBody) RestAction Constructor}
+     *        which is provided to the {@link RestActionImpl#RestActionImpl(Route.CompiledRoute, okhttp3.RequestBody) RestAction Constructor}
      */
-    public OrderActionImpl(JDA api, Route.CompiledRoute route)
+    public OrderActionImpl(/*JDA api,*/ Route.CompiledRoute route)
     {
-        this(api, true, route);
+        this(true, route);
     }
 
     /**
      * Creates a new OrderAction instance
      *
-     * @param api
-     *        JDA instance which is associated with the entities contained
-     *        in the order list
      * @param ascendingOrder
      *        Whether or not the order of items should be ascending
      * @param route
      *        The {@link net.dv8tion.jda.internal.requests.Route.CompiledRoute CompiledRoute}
-     *        which is provided to the {@link RestActionImpl#RestActionImpl(JDA, Route.CompiledRoute, okhttp3.RequestBody) RestAction Constructor}
+     *        which is provided to the {@link RestActionImpl#RestActionImpl(Route.CompiledRoute, okhttp3.RequestBody) RestAction Constructor}
      */
-    public OrderActionImpl(JDA api, boolean ascendingOrder, Route.CompiledRoute route)
+    public OrderActionImpl(/*JDA api,*/ boolean ascendingOrder, Route.CompiledRoute route)
     {
-        super(api, route);
+        super(route);
         this.orderList = new ArrayList<>();
         this.ascendingOrder = ascendingOrder;
     }
