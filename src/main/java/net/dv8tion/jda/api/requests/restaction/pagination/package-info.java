@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
  * Extensions of {@link net.dv8tion.jda.api.requests.RestAction RestAction} that allow
  * to access paginated discord endpoints like the message history of a {@link net.dv8tion.jda.api.entities.MessageChannel MessageChannel}.

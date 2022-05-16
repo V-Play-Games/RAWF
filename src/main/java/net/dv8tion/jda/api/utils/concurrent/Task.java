@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.api.utils.concurrent;
 
 import javax.annotation.Nonnull;
@@ -23,11 +22,9 @@ import java.util.function.Consumer;
  * Represents an asynchronous task.
  * <br>Note: The underlying task may already be started.
  *
- * @param <T>
- *        The result type
+ * @param <T> The result type
  */
-public interface Task<T>
-{
+public interface Task<T> {
     /**
      * Whether this task has started.
      *
@@ -42,13 +39,9 @@ public interface Task<T>
      * <p>The error will be logged regardless of your callback, this only exists to handle
      * failures for other purposes.
      *
-     * @param  callback
-     *         The error callback
-     *
-     * @throws IllegalArgumentException
-     *         If null is provided
-     *
+     * @param callback The error callback
      * @return The current Task instance for chaining
+     * @throws IllegalArgumentException If null is provided
      */
     @Nonnull
     Task<T> onError(@Nonnull Consumer<? super Throwable> callback);
@@ -57,13 +50,9 @@ public interface Task<T>
      * Provide a callback for success handling.
      * <br>This is an asynchronous operation.
      *
-     * @param  callback
-     *         The success callback
-     *
-     * @throws IllegalArgumentException
-     *         If null is provided
-     *
+     * @param callback The success callback
      * @return The current Task instance for chaining
+     * @throws IllegalArgumentException If null is provided
      */
     @Nonnull
     Task<T> onSuccess(@Nonnull Consumer<? super T> callback);
@@ -73,14 +62,10 @@ public interface Task<T>
      * <br>This will not work on the default JDA event thread because it might depend on other events to be processed,
      * which could lead to a deadlock.
      *
-     * @throws UnsupportedOperationException
-     *         If this is called on the default JDA event thread
-     * @throws java.util.concurrent.CompletionException
-     *         If some exception occurred (such as {@link java.util.concurrent.TimeoutException}).
-     * @throws java.util.concurrent.CancellationException
-     *         If the request was cancelled
-     *
      * @return The result value
+     * @throws UnsupportedOperationException              If this is called on the default JDA event thread
+     * @throws java.util.concurrent.CompletionException   If some exception occurred (such as {@link java.util.concurrent.TimeoutException}).
+     * @throws java.util.concurrent.CancellationException If the request was cancelled
      */
     @Nonnull
     T get();

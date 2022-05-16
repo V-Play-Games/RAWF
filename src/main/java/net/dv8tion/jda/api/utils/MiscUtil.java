@@ -29,66 +29,49 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-public class MiscUtil
-{
+public class MiscUtil {
     /**
      * Generates a new thread-safe {@link gnu.trove.map.TLongObjectMap TLongObjectMap}
      *
-     * @param  <T>
-     *         The Object type
-     *
+     * @param <T> The Object type
      * @return a new thread-safe {@link gnu.trove.map.TLongObjectMap TLongObjectMap}
      */
-    public static <T> TLongObjectMap<T> newLongMap()
-    {
+    public static <T> TLongObjectMap<T> newLongMap() {
         return new TSynchronizedLongObjectMap<>(new TLongObjectHashMap<T>(), new Object());
     }
 
-    public static long parseLong(String input)
-    {
+    public static long parseLong(String input) {
         if (input.startsWith("-"))
             return Long.parseLong(input);
         else
             return Long.parseUnsignedLong(input);
     }
 
-    public static long parseSnowflake(String input)
-    {
+    public static long parseSnowflake(String input) {
         Checks.notEmpty(input, "ID");
-        try
-        {
+        try {
             return parseLong(input);
-        }
-        catch (NumberFormatException ex)
-        {
+        } catch (NumberFormatException ex) {
             throw new NumberFormatException(
                 Helpers.format("The specified ID is not a valid snowflake (%s). Expecting a valid long value!", input));
         }
     }
 
-    public static <E> E locked(ReentrantLock lock, Supplier<E> task)
-    {
-        try
-        {
+    public static <E> E locked(ReentrantLock lock, Supplier<E> task) {
+        try {
             tryLock(lock);
             return task.get();
-        }
-        finally
-        {
+        } finally {
             if (lock.isHeldByCurrentThread())
                 lock.unlock();
         }
     }
 
-    public static void locked(ReentrantLock lock, Runnable task)
-    {
-        try
-        {
+    public static void locked(ReentrantLock lock, Runnable task) {
+        try {
             tryLock(lock);
             task.run();
-        }
-        finally
-        {
+        } finally {
             if (lock.isHeldByCurrentThread())
                 lock.unlock();
         }
@@ -97,21 +80,14 @@ public class MiscUtil
     /**
      * Tries to acquire the provided lock in a 10 second timeframe.
      *
-     * @param  lock
-     *         The lock to acquire
-     *
-     * @throws IllegalStateException
-     *         If the lock could not be acquired
+     * @param lock The lock to acquire
+     * @throws IllegalStateException If the lock could not be acquired
      */
-    public static void tryLock(Lock lock)
-    {
-        try
-        {
+    public static void tryLock(Lock lock) {
+        try {
             if (!lock.tryLock() && !lock.tryLock(10, TimeUnit.SECONDS))
                 throw new IllegalStateException("Could not acquire lock in a reasonable timeframe! (10 seconds)");
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             throw new IllegalStateException("Unable to acquire lock while thread is interrupted!");
         }
     }
@@ -119,24 +95,16 @@ public class MiscUtil
     /**
      * Can be used to append a String to a formatter.
      *
-     * @param formatter
-     *        The {@link java.util.Formatter Formatter}
-     * @param width
-     *        Minimum width to meet, filled with space if needed
-     * @param precision
-     *        Maximum amount of characters to append
-     * @param leftJustified
-     *        Whether or not to left-justify the value
-     * @param out
-     *        The String to append
+     * @param formatter     The {@link java.util.Formatter Formatter}
+     * @param width         Minimum width to meet, filled with space if needed
+     * @param precision     Maximum amount of characters to append
+     * @param leftJustified Whether or not to left-justify the value
+     * @param out           The String to append
      */
-    public static void appendTo(Formatter formatter, int width, int precision, boolean leftJustified, String out)
-    {
-        try
-        {
+    public static void appendTo(Formatter formatter, int width, int precision, boolean leftJustified, String out) {
+        try {
             Appendable appendable = formatter.out();
-            if (precision > -1 && out.length() > precision)
-            {
+            if (precision > -1 && out.length() > precision) {
                 appendable.append(Helpers.truncate(out, precision));
                 return;
             }
@@ -145,9 +113,7 @@ public class MiscUtil
                 appendable.append(Helpers.rightPad(out, width));
             else
                 appendable.append(Helpers.leftPad(out, width));
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }

@@ -13,40 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.utils;
-
 
 import java.util.concurrent.Callable;
 
-public class ContextRunnable<E> implements Runnable, Callable<E>
-{
+public class ContextRunnable<E> implements Runnable, Callable<E> {
     private final Runnable runnable;
     private final Callable<E> callable;
 
-    public ContextRunnable(Runnable runnable)
-    {
+    public ContextRunnable(Runnable runnable) {
         this.runnable = runnable;
         this.callable = null;
     }
 
-    public ContextRunnable(Callable<E> callable)
-    {
+    public ContextRunnable(Callable<E> callable) {
         this.runnable = null;
         this.callable = callable;
     }
 
     @Override
-    public void run()
-    {
+    public void run() {
         {
             runnable.run();
         }
     }
 
     @Override
-    public E call() throws Exception
-    {
+    public E call() throws Exception {
         {
             return callable.call();
         }

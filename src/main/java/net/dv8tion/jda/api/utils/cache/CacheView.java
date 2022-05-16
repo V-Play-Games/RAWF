@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.api.utils.cache;
 
 import net.dv8tion.jda.api.utils.ClosableIterator;
@@ -54,11 +53,39 @@ import java.util.stream.StreamSupport;
  * it, use {@link SortedSnowflakeCacheView#forEachUnordered(Consumer)} to avoid this overhead.
  * The backing cache is stored using an un-ordered hash map.
  *
- * @param  <T>
- *         The cache type
+ * @param <T> The cache type
  */
-public interface CacheView<T> extends Iterable<T>
-{
+public interface CacheView<T> extends Iterable<T> {
+    /**
+     * Creates a combined {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView}
+     * for all provided CacheView implementations. This allows to combine cache of multiple
+     * JDA sessions or Guilds.
+     *
+     * @param cacheViews Collection of {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView} implementations
+     * @param <E>        The target type of the projection
+     * @return Combined CacheView spanning over all provided implementation instances
+     */
+    @Nonnull
+    static <E> CacheView<E> all(@Nonnull Collection<? extends CacheView<E>> cacheViews) {
+        Checks.noneNull(cacheViews, "Collection");
+        return new UnifiedCacheViewImpl<>(cacheViews::stream);
+    }
+
+    /**
+     * Creates a combined {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView}
+     * for all provided CacheView implementations. This allows to combine cache of multiple
+     * JDA sessions or Guilds.
+     *
+     * @param generator Stream generator of {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView} implementations
+     * @param <E>       The target type of the projection
+     * @return Combined CacheView spanning over all provided implementation instances
+     */
+    @Nonnull
+    static <E> CacheView<E> all(@Nonnull Supplier<? extends Stream<? extends CacheView<E>>> generator) {
+        Checks.notNull(generator, "Generator");
+        return new UnifiedCacheViewImpl<>(generator);
+    }
+
     /**
      * Creates an immutable snapshot of the current cache state.
      * <br>This will copy all elements contained in this cache into a list.
@@ -86,8 +113,7 @@ public interface CacheView<T> extends Iterable<T>
      * if order is desired use {@link #iterator()} instead!</b>
      *
      * @return {@link ClosableIterator} holding a read-lock on the data structure.
-     *
-     * @since  4.0.0
+     * @since 4.0.0
      */
     @Nonnull
     ClosableIterator<T> lockedIterator();
@@ -96,16 +122,11 @@ public interface CacheView<T> extends Iterable<T>
      * Behavior similar to {@link #forEach(Consumer)} but does not preserve order.
      * <br>This will not copy the data store as sorting is not needed.
      *
-     * @param  action
-     *         The action to perform
-     *
-     * @throws NullPointerException
-     *         If provided with null
-     *
-     * @since  4.0.0
+     * @param action The action to perform
+     * @throws NullPointerException If provided with null
+     * @since 4.0.0
      */
-    default void forEachUnordered(@Nonnull final Consumer<? super T> action)
-    {
+    default void forEachUnordered(@Nonnull final Consumer<? super T> action) {
         forEach(action);
     }
 
@@ -122,26 +143,17 @@ public interface CacheView<T> extends Iterable<T>
      * System.out.println(shortNames + " users with less than 4 characters in their name");
      * </code>
      *
-     * @param  action
-     *         The action to perform on the stream
-     * @param  <R>
-     *         The return type after performing the specified action
-     *
-     * @throws IllegalArgumentException
-     *         If the action is null
-     *
+     * @param action The action to perform on the stream
+     * @param <R>    The return type after performing the specified action
      * @return The resulting value after the action was performed
-     *
-     * @since  4.0.0
-     *
-     * @see    #acceptStream(Consumer)
+     * @throws IllegalArgumentException If the action is null
+     * @see #acceptStream(Consumer)
+     * @since 4.0.0
      */
     @Nullable
-    default <R> R applyStream(@Nonnull Function<? super Stream<T>, ? extends R> action)
-    {
+    default <R> R applyStream(@Nonnull Function<? super Stream<T>, ? extends R> action) {
         Checks.notNull(action, "Action");
-        try (ClosableIterator<T> it = lockedIterator())
-        {
+        try (ClosableIterator<T> it = lockedIterator()) {
             Spliterator<T> spliterator = Spliterators.spliterator(it, size(), Spliterator.IMMUTABLE | Spliterator.NONNULL);
             Stream<T> stream = StreamSupport.stream(spliterator, false);
             return action.apply(stream);
@@ -160,21 +172,14 @@ public interface CacheView<T> extends Iterable<T>
      * view.acceptStream(stream {@literal ->} stream.filter(it {@literal ->} it.isNSFW()).forEach(it {@literal ->} it.sendMessage("lewd").queue()));
      * </code>
      *
-     * @param  action
-     *         The action to perform on the stream
-     *
-     * @throws IllegalArgumentException
-     *         If the action is null
-     *
-     * @since  4.0.0
-     *
-     * @see    #applyStream(Function)
+     * @param action The action to perform on the stream
+     * @throws IllegalArgumentException If the action is null
+     * @see #applyStream(Function)
+     * @since 4.0.0
      */
-    default void acceptStream(@Nonnull Consumer<? super Stream<T>> action)
-    {
+    default void acceptStream(@Nonnull Consumer<? super Stream<T>> action) {
         Checks.notNull(action, "Action");
-        try (ClosableIterator<T> it = lockedIterator())
-        {
+        try (ClosableIterator<T> it = lockedIterator()) {
             Spliterator<T> spliterator = Spliterators.spliterator(it, size(), Spliterator.IMMUTABLE | Spliterator.NONNULL);
             Stream<T> stream = StreamSupport.stream(spliterator, false);
             action.accept(stream);
@@ -208,15 +213,10 @@ public interface CacheView<T> extends Iterable<T>
     /**
      * Creates an immutable list of all elements matching the given name.
      *
-     * @param  name
-     *         The name to check
-     * @param  ignoreCase
-     *         Whether to ignore case when comparing names
-     *
-     * @throws java.lang.IllegalArgumentException
-     *         If the provided name is {@code null}
-     *
+     * @param name       The name to check
+     * @param ignoreCase Whether to ignore case when comparing names
      * @return Immutable list of elements with the given name
+     * @throws java.lang.IllegalArgumentException If the provided name is {@code null}
      */
     @Nonnull
     List<T> getElementsByName(@Nonnull String name, boolean ignoreCase);
@@ -224,17 +224,12 @@ public interface CacheView<T> extends Iterable<T>
     /**
      * Creates an immutable list of all elements matching the given name.
      *
-     * @param  name
-     *         The name to check
-     *
-     * @throws java.lang.IllegalArgumentException
-     *         If the provided name is {@code null}
-     *
+     * @param name The name to check
      * @return Immutable list of elements with the given name
+     * @throws java.lang.IllegalArgumentException If the provided name is {@code null}
      */
     @Nonnull
-    default List<T> getElementsByName(@Nonnull String name)
-    {
+    default List<T> getElementsByName(@Nonnull String name) {
         return getElementsByName(name, false);
     }
 
@@ -259,63 +254,15 @@ public interface CacheView<T> extends Iterable<T>
      * {@link java.util.stream.Collector Collector}.
      * Shortcut for {@code stream().collect(collector)}.
      *
-     * @param  collector
-     *         The collector used to collect the elements
-     *
-     * @param  <R>
-     *         The output type
-     * @param  <A>
-     *         The accumulator type
-     *
-     * @throws java.lang.IllegalArgumentException
-     *         If the provided collector is {@code null}
-     *
+     * @param collector The collector used to collect the elements
+     * @param <R>       The output type
+     * @param <A>       The accumulator type
      * @return Resulting collections
+     * @throws java.lang.IllegalArgumentException If the provided collector is {@code null}
      */
     @Nonnull
-    default <R, A> R collect(@Nonnull Collector<? super T, A, R> collector)
-    {
+    default <R, A> R collect(@Nonnull Collector<? super T, A, R> collector) {
         return stream().collect(collector);
-    }
-
-    /**
-     * Creates a combined {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView}
-     * for all provided CacheView implementations. This allows to combine cache of multiple
-     * JDA sessions or Guilds.
-     *
-     * @param  cacheViews
-     *         Collection of {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView} implementations
-     *
-     * @param  <E>
-     *         The target type of the projection
-     *
-     * @return Combined CacheView spanning over all provided implementation instances
-     */
-    @Nonnull
-    static <E> CacheView<E> all(@Nonnull Collection<? extends CacheView<E>> cacheViews)
-    {
-        Checks.noneNull(cacheViews, "Collection");
-        return new UnifiedCacheViewImpl<>(cacheViews::stream);
-    }
-
-    /**
-     * Creates a combined {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView}
-     * for all provided CacheView implementations. This allows to combine cache of multiple
-     * JDA sessions or Guilds.
-     *
-     * @param  generator
-     *         Stream generator of {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView} implementations
-     *
-     * @param  <E>
-     *         The target type of the projection
-     *
-     * @return Combined CacheView spanning over all provided implementation instances
-     */
-    @Nonnull
-    static <E> CacheView<E> all(@Nonnull Supplier<? extends Stream<? extends CacheView<E>>> generator)
-    {
-        Checks.notNull(generator, "Generator");
-        return new UnifiedCacheViewImpl<>(generator);
     }
 
 //    /**
@@ -362,13 +309,10 @@ public interface CacheView<T> extends Iterable<T>
      * Basic implementation of {@link net.dv8tion.jda.api.utils.cache.CacheView CacheView} interface.
      * <br>Using {@link gnu.trove.map.TLongObjectMap TLongObjectMap} to cache entities!
      *
-     * @param <T>
-     *        The type this should cache
+     * @param <T> The type this should cache
      */
-    class SimpleCacheView<T> extends AbstractCacheView<T>
-    {
-        public SimpleCacheView(@Nonnull Class<T> type, @Nullable Function<T, String> nameMapper)
-        {
+    class SimpleCacheView<T> extends AbstractCacheView<T> {
+        public SimpleCacheView(@Nonnull Class<T> type, @Nullable Function<T, String> nameMapper) {
             super(type, nameMapper);
         }
     }

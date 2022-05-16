@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
@@ -26,49 +25,42 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class DelayRestAction<T> extends RestActionOperator<T, T>
-{
+public class DelayRestAction<T> extends RestActionOperator<T, T> {
     private final TimeUnit unit;
     private final long delay;
     private final ScheduledExecutorService scheduler;
 
-    public DelayRestAction(RestAction<T> action, TimeUnit unit, long delay, ScheduledExecutorService scheduler)
-    {
+    public DelayRestAction(RestAction<T> action, TimeUnit unit, long delay, ScheduledExecutorService scheduler) {
         super(action);
         this.unit = unit;
         this.delay = delay;
-        this.scheduler = scheduler == null ? /*action.getJDA().getRateLimitPool()*/ null : scheduler;
+        /*action.getJDA().getRateLimitPool()*/
+        this.scheduler = scheduler;
     }
 
     @Override
-    public void queue(@Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure)
-    {
+    public void queue(@Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure) {
         handle(action, failure, (result) ->
             scheduler.schedule(() ->
-                doSuccess(success, result),
-            delay, unit)
+                    doSuccess(success, result),
+                delay, unit)
         );
     }
 
     @Override
-    public T complete(boolean shouldQueue) throws RateLimitedException
-    {
+    public T complete(boolean shouldQueue) throws RateLimitedException {
         T result = action.complete(shouldQueue);
-        try
-        {
+        try {
             unit.sleep(delay);
             return result;
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Nonnull
     @Override
-    public CompletableFuture<T> submit(boolean shouldQueue)
-    {
+    public CompletableFuture<T> submit(boolean shouldQueue) {
         CompletableFuture<T> future = new CompletableFuture<>();
         queue(future::complete, future::completeExceptionally);
         return future;

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.utils;
 
 import org.slf4j.helpers.FormattingTuple;
@@ -35,20 +34,27 @@ import java.util.Properties;
 
 class SimpleLogger extends MarkerIgnoringBase {
 
+    public static final String SYSTEM_PREFIX = "org.slf4j.Loggerger.";
+    public static final String DEFAULT_LOG_LEVEL_KEY = SYSTEM_PREFIX + "defaultLogLevel";
+    public static final String SHOW_DATE_TIME_KEY = SYSTEM_PREFIX + "showDateTime";
+    public static final String DATE_TIME_FORMAT_KEY = SYSTEM_PREFIX + "dateTimeFormat";
+    public static final String SHOW_THREAD_NAME_KEY = SYSTEM_PREFIX + "showThreadName";
+    public static final String SHOW_LOG_NAME_KEY = SYSTEM_PREFIX + "showLogName";
+    public static final String SHOW_SHORT_LOG_NAME_KEY = SYSTEM_PREFIX + "showShortLogName";
+    public static final String LOG_FILE_KEY = SYSTEM_PREFIX + "logFile";
+    public static final String LEVEL_IN_BRACKETS_KEY = SYSTEM_PREFIX + "levelInBrackets";
+    public static final String WARN_LEVEL_STRING_KEY = SYSTEM_PREFIX + "warnLevelString";
+    public static final String LOG_KEY_PREFIX = SYSTEM_PREFIX + "log.";
     private static final long serialVersionUID = -632788891211436180L;
     private static final String CONFIGURATION_FILE = "Loggerger.properties";
-
-    private static long START_TIME = System.currentTimeMillis();
     private static final Properties SIMPLE_LOGGER_PROPS = new Properties();
-
     private static final int LOG_LEVEL_TRACE = LocationAwareLogger.TRACE_INT;
     private static final int LOG_LEVEL_DEBUG = LocationAwareLogger.DEBUG_INT;
     private static final int LOG_LEVEL_INFO = LocationAwareLogger.INFO_INT;
     private static final int LOG_LEVEL_WARN = LocationAwareLogger.WARN_INT;
     private static final int LOG_LEVEL_ERROR = LocationAwareLogger.ERROR_INT;
-
+    private static final long START_TIME = System.currentTimeMillis();
     private static boolean INITIALIZED = false;
-
     private static int DEFAULT_LOG_LEVEL = LOG_LEVEL_INFO;
     private static boolean SHOW_DATE_TIME = false;
     private static String DATE_TIME_FORMAT_STR = null;
@@ -60,27 +66,29 @@ class SimpleLogger extends MarkerIgnoringBase {
     private static PrintStream TARGET_STREAM = null;
     private static boolean LEVEL_IN_BRACKETS = false;
     private static String WARN_LEVEL_STRING = "WARN";
+    protected int currentLogLevel = LOG_LEVEL_INFO;
+    private transient String shortLogName = null;
 
-    public static final String SYSTEM_PREFIX = "org.slf4j.Loggerger.";
+    SimpleLogger(String name) {
+        if (!INITIALIZED) {
+            init();
+        }
+        this.name = name;
 
-    public static final String DEFAULT_LOG_LEVEL_KEY = SYSTEM_PREFIX + "defaultLogLevel";
-    public static final String SHOW_DATE_TIME_KEY = SYSTEM_PREFIX + "showDateTime";
-    public static final String DATE_TIME_FORMAT_KEY = SYSTEM_PREFIX + "dateTimeFormat";
-    public static final String SHOW_THREAD_NAME_KEY = SYSTEM_PREFIX + "showThreadName";
-    public static final String SHOW_LOG_NAME_KEY = SYSTEM_PREFIX + "showLogName";
-    public static final String SHOW_SHORT_LOG_NAME_KEY = SYSTEM_PREFIX + "showShortLogName";
-    public static final String LOG_FILE_KEY = SYSTEM_PREFIX + "logFile";
-    public static final String LEVEL_IN_BRACKETS_KEY = SYSTEM_PREFIX + "levelInBrackets";
-    public static final String WARN_LEVEL_STRING_KEY = SYSTEM_PREFIX + "warnLevelString";
-
-    public static final String LOG_KEY_PREFIX = SYSTEM_PREFIX + "log.";
+        String levelString = recursivelyComputeLevelString();
+        if (levelString != null) {
+            this.currentLogLevel = stringToLevel(levelString);
+        } else {
+            this.currentLogLevel = DEFAULT_LOG_LEVEL;
+        }
+    }
 
     private static String getStringProperty(String name) {
         String prop = null;
         try {
             prop = System.getProperty(name);
         } catch (SecurityException e) {
-            ; // Ignore
+            // Ignore
         }
         return (prop == null) ? SIMPLE_LOGGER_PROPS.getProperty(name) : prop;
     }
@@ -162,35 +170,6 @@ class SimpleLogger extends MarkerIgnoringBase {
         }
     }
 
-    protected int currentLogLevel = LOG_LEVEL_INFO;
-    private transient String shortLogName = null;
-
-    SimpleLogger(String name) {
-        if (!INITIALIZED) {
-            init();
-        }
-        this.name = name;
-
-        String levelString = recursivelyComputeLevelString();
-        if (levelString != null) {
-            this.currentLogLevel = stringToLevel(levelString);
-        } else {
-            this.currentLogLevel = DEFAULT_LOG_LEVEL;
-        }
-    }
-
-    String recursivelyComputeLevelString() {
-        String tempName = name;
-        String levelString = null;
-        int indexOfLastDot = tempName.length();
-        while ((levelString == null) && (indexOfLastDot > -1)) {
-            tempName = tempName.substring(0, indexOfLastDot);
-            levelString = getStringProperty(LOG_KEY_PREFIX + tempName, null);
-            indexOfLastDot = String.valueOf(tempName).lastIndexOf(".");
-        }
-        return levelString;
-    }
-
     private static int stringToLevel(String levelStr) {
         if ("trace".equalsIgnoreCase(levelStr)) {
             return LOG_LEVEL_TRACE;
@@ -205,6 +184,18 @@ class SimpleLogger extends MarkerIgnoringBase {
         }
         // assume INFO by default
         return LOG_LEVEL_INFO;
+    }
+
+    String recursivelyComputeLevelString() {
+        String tempName = name;
+        String levelString = null;
+        int indexOfLastDot = tempName.length();
+        while ((levelString == null) && (indexOfLastDot > -1)) {
+            tempName = tempName.substring(0, indexOfLastDot);
+            levelString = getStringProperty(LOG_KEY_PREFIX + tempName, null);
+            indexOfLastDot = tempName.lastIndexOf(".");
+        }
+        return levelString;
     }
 
     private void log(int level, String message, Throwable t) {
@@ -261,16 +252,15 @@ class SimpleLogger extends MarkerIgnoringBase {
         if (SHOW_SHORT_LOG_NAME) {
             if (shortLogName == null)
                 shortLogName = computeShortName();
-            buf.append(String.valueOf(shortLogName)).append(" - ");
+            buf.append(shortLogName).append(" - ");
         } else if (SHOW_LOG_NAME) {
-            buf.append(String.valueOf(name)).append(" - ");
+            buf.append(name).append(" - ");
         }
 
         // Append the message
         buf.append(message);
 
         write(buf, t);
-
     }
 
     void write(StringBuilder buf, Throwable t) {

@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.api.exceptions;
 
-public class HttpException extends RuntimeException
-{
-    public HttpException(String message)
-    {
+public class HttpException extends RuntimeException {
+    public HttpException(String message) {
         super(message);
     }
 
-    public HttpException(String message, Throwable cause)
-    {
+    public HttpException(String message, Throwable cause) {
         super(message, cause);
     }
 }

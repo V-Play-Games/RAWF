@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
  * Package which contains all utilities for the JDA library.
  * These are used by JDA itself and can also be useful for the library user!

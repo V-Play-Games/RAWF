@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.api.utils;
 
 import net.dv8tion.jda.api.utils.cache.CacheView;
@@ -44,34 +43,28 @@ import java.util.concurrent.locks.Lock;
  * }
  * }</pre>
  *
- * @param <T>
- *        The element type for this iterator
- *
- * @since  4.0.0
+ * @param <T> The element type for this iterator
+ * @since 4.0.0
  */
-public class LockIterator<T> implements ClosableIterator<T>
-{
+public class LockIterator<T> implements ClosableIterator<T> {
     private final static Logger log = JDALogger.getLog(ClosableIterator.class);
     private final Iterator<? extends T> it;
     private Lock lock;
 
-    public LockIterator(@Nonnull Iterator<? extends T> it, Lock lock)
-    {
+    public LockIterator(@Nonnull Iterator<? extends T> it, Lock lock) {
         this.it = it;
         this.lock = lock;
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         if (lock != null)
             lock.unlock();
         lock = null;
     }
 
     @Override
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         if (lock == null)
             return false;
         boolean hasNext = it.hasNext();
@@ -82,8 +75,7 @@ public class LockIterator<T> implements ClosableIterator<T>
 
     @Nonnull
     @Override
-    public T next()
-    {
+    public T next() {
         if (lock == null)
             throw new NoSuchElementException();
         return it.next();
@@ -91,10 +83,8 @@ public class LockIterator<T> implements ClosableIterator<T>
 
     @Override
     @Deprecated //Deprecated in Java 9 because the finalization system is being changed/removed
-    protected void finalize()
-    {
-        if (lock != null)
-        {
+    protected void finalize() {
+        if (lock != null) {
             log.error("Finalizing without closing, performing force close on lock");
             close();
         }

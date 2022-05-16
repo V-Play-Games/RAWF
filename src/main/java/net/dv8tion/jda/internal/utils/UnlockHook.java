@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.utils;
 
 import java.util.concurrent.locks.Lock;
 
-public class UnlockHook implements AutoCloseable
-{
+public class UnlockHook implements AutoCloseable {
     private final Lock lock;
 
-    public UnlockHook(Lock lock)
-    {
+    public UnlockHook(Lock lock) {
         this.lock = lock;
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         lock.unlock();
     }
 }

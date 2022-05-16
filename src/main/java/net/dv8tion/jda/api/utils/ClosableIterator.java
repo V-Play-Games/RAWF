@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.api.utils;
 
 import java.util.Iterator;
@@ -35,13 +34,10 @@ import java.util.Iterator;
  * }
  * }</pre>
  *
- * @param <T>
- *        The element type
- *
+ * @param <T> The element type
  * @since 4.0.0
  */
-public interface ClosableIterator<T> extends Iterator<T>, AutoCloseable
-{
+public interface ClosableIterator<T> extends Iterator<T>, AutoCloseable {
     @Override
     void close();
 }

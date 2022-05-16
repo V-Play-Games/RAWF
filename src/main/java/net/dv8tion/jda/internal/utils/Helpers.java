@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.utils;
 
 import javax.annotation.Nullable;
@@ -28,66 +27,48 @@ import java.util.function.Consumer;
  *
  * <p>Specifically StringUtils.java and ExceptionUtils.java
  */
-public final class Helpers
-{
+public final class Helpers {
     private static final ZoneOffset OFFSET = ZoneOffset.of("+00:00");
     @SuppressWarnings("rawtypes")
-    private static final Consumer EMPTY_CONSUMER = (v) -> {};
+    private static final Consumer EMPTY_CONSUMER = (v) -> {
+    };
 
     @SuppressWarnings("unchecked")
-    public static <T> Consumer<T> emptyConsumer()
-    {
+    public static <T> Consumer<T> emptyConsumer() {
         return (Consumer<T>) EMPTY_CONSUMER;
     }
 
-    public static OffsetDateTime toOffset(long instant)
-    {
+    public static OffsetDateTime toOffset(long instant) {
         return OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), OFFSET);
     }
 
-    public static long toTimestamp(String iso8601String)
-    {
+    public static long toTimestamp(String iso8601String) {
         TemporalAccessor joinedAt = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(iso8601String);
         return Instant.from(joinedAt).toEpochMilli();
     }
 
-    public static OffsetDateTime toOffsetDateTime(@Nullable TemporalAccessor temporal)
-    {
-        if (temporal == null)
-        {
+    public static OffsetDateTime toOffsetDateTime(@Nullable TemporalAccessor temporal) {
+        if (temporal == null) {
             return null;
-        }
-        else if (temporal instanceof OffsetDateTime)
-        {
+        } else if (temporal instanceof OffsetDateTime) {
             return (OffsetDateTime) temporal;
-        }
-        else
-        {
+        } else {
             ZoneOffset offset;
-            try
-            {
+            try {
                 offset = ZoneOffset.from(temporal);
-            }
-            catch (DateTimeException ignore)
-            {
+            } catch (DateTimeException ignore) {
                 offset = ZoneOffset.UTC;
             }
-            try
-            {
+            try {
                 LocalDateTime ldt = LocalDateTime.from(temporal);
                 return OffsetDateTime.of(ldt, offset);
-            }
-            catch (DateTimeException ignore)
-            {
-                try
-                {
+            } catch (DateTimeException ignore) {
+                try {
                     Instant instant = Instant.from(temporal);
                     return OffsetDateTime.ofInstant(instant, offset);
-                }
-                catch (DateTimeException ex)
-                {
+                } catch (DateTimeException ex) {
                     throw new DateTimeException("Unable to obtain OffsetDateTime from TemporalAccessor: " +
-                            temporal + " of type " + temporal.getClass().getName(), ex);
+                        temporal + " of type " + temporal.getClass().getName(), ex);
                 }
             }
         }
@@ -95,57 +76,48 @@ public final class Helpers
 
     // locale-safe String#format
 
-    public static String format(String format, Object... args)
-    {
+    public static String format(String format, Object... args) {
         return String.format(Locale.ROOT, format, args);
     }
 
     // ## StringUtils ##
 
-    public static boolean isEmpty(final CharSequence seq)
-    {
+    public static boolean isEmpty(final CharSequence seq) {
         return seq == null || seq.length() == 0;
     }
 
-    public static boolean containsWhitespace(final CharSequence seq)
-    {
+    public static boolean containsWhitespace(final CharSequence seq) {
         if (isEmpty(seq))
             return false;
-        for (int i = 0; i < seq.length(); i++)
-        {
+        for (int i = 0; i < seq.length(); i++) {
             if (Character.isWhitespace(seq.charAt(i)))
                 return true;
         }
         return false;
     }
 
-    public static boolean isBlank(final CharSequence seq)
-    {
+    public static boolean isBlank(final CharSequence seq) {
         if (isEmpty(seq))
             return true;
-        for (int i = 0; i < seq.length(); i++)
-        {
+        for (int i = 0; i < seq.length(); i++) {
             if (!Character.isWhitespace(seq.charAt(i)))
                 return false;
         }
         return true;
     }
 
-    public static int countMatches(final CharSequence seq, final char c)
-    {
+    public static int countMatches(final CharSequence seq, final char c) {
         if (isEmpty(seq))
             return 0;
         int count = 0;
-        for (int i = 0; i < seq.length(); i++)
-        {
+        for (int i = 0; i < seq.length(); i++) {
             if (seq.charAt(i) == c)
                 count++;
         }
         return count;
     }
 
-    public static String truncate(final String input, final int maxWidth)
-    {
+    public static String truncate(final String input, final int maxWidth) {
         if (input == null)
             return null;
         Checks.notNegative(maxWidth, "maxWidth");
@@ -156,8 +128,7 @@ public final class Helpers
         return input.substring(0, maxWidth);
     }
 
-    public static String rightPad(final String input, final int size)
-    {
+    public static String rightPad(final String input, final int size) {
         int pads = size - input.length();
         if (pads <= 0)
             return input;
@@ -167,8 +138,7 @@ public final class Helpers
         return out.toString();
     }
 
-    public static String leftPad(final String input, final int size)
-    {
+    public static String leftPad(final String input, final int size) {
         int pads = size - input.length();
         if (pads <= 0)
             return input;
@@ -178,33 +148,28 @@ public final class Helpers
         return out.append(input).toString();
     }
 
-    public static boolean isNumeric(final String input)
-    {
+    public static boolean isNumeric(final String input) {
         if (isEmpty(input))
             return false;
-        for (char c : input.toCharArray())
-        {
+        for (char c : input.toCharArray()) {
             if (!Character.isDigit(c))
                 return false;
         }
         return true;
     }
 
-    public static int codePointLength(final String string)
-    {
+    public static int codePointLength(final String string) {
         return string.codePointCount(0, string.length());
     }
 
     // ## CollectionUtils ##
 
-    public static boolean deepEquals(Collection<?> first, Collection<?> second)
-    {
+    public static boolean deepEquals(Collection<?> first, Collection<?> second) {
         if (first == second)
             return true;
         if (first == null || second == null || first.size() != second.size())
             return false;
-        for (Iterator<?> itFirst = first.iterator(), itSecond = second.iterator(); itFirst.hasNext(); )
-        {
+        for (Iterator<?> itFirst = first.iterator(), itSecond = second.iterator(); itFirst.hasNext(); ) {
             Object elementFirst = itFirst.next();
             Object elementSecond = itSecond.next();
             if (!Objects.equals(elementFirst, elementSecond))
@@ -213,22 +178,19 @@ public final class Helpers
         return true;
     }
 
-    public static boolean deepEqualsUnordered(Collection<?> first, Collection<?> second)
-    {
+    public static boolean deepEqualsUnordered(Collection<?> first, Collection<?> second) {
         if (first == second) return true;
         if (first == null || second == null) return false;
         return first.size() == second.size() && second.containsAll(first);
     }
 
-    public static <E extends Enum<E>> EnumSet<E> copyEnumSet(Class<E> clazz, Collection<E> col)
-    {
+    public static <E extends Enum<E>> EnumSet<E> copyEnumSet(Class<E> clazz, Collection<E> col) {
         return col == null || col.isEmpty() ? EnumSet.noneOf(clazz) : EnumSet.copyOf(col);
     }
 
     // ## ExceptionUtils ##
 
-    public static <T extends Throwable> T appendCause(T throwable, Throwable cause)
-    {
+    public static <T extends Throwable> T appendCause(T throwable, Throwable cause) {
         Throwable t = throwable;
         while (t.getCause() != null)
             t = t.getCause();
@@ -236,11 +198,9 @@ public final class Helpers
         return throwable;
     }
 
-    public static boolean hasCause(Throwable throwable, Class<? extends Throwable> cause)
-    {
+    public static boolean hasCause(Throwable throwable, Class<? extends Throwable> cause) {
         Throwable cursor = throwable;
-        while (cursor != null)
-        {
+        while (cursor != null) {
             if (cause.isInstance(cursor))
                 return true;
             cursor = cursor.getCause();

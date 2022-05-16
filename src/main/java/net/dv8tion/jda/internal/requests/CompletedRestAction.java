@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.requests;
 
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
@@ -26,26 +25,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public class CompletedRestAction<T> implements RestAction<T>
-{
-//    private final JDA api;
+public class CompletedRestAction<T> implements RestAction<T> {
+    //    private final JDA api;
     private final T value;
     private final Throwable error;
 
-    public CompletedRestAction(/*JDA api,*/ T value, Throwable error)
-    {
+    public CompletedRestAction(/*JDA api,*/ T value, Throwable error) {
 //        this.api = api;
         this.value = value;
         this.error = error;
     }
 
-    public CompletedRestAction(/*JDA api,*/ T value)
-    {
+    public CompletedRestAction(/*JDA api,*/ T value) {
         this(value, null);
     }
 
-    public CompletedRestAction(/*JDA api,*/ Throwable error)
-    {
+    public CompletedRestAction(/*JDA api,*/ Throwable error) {
         this(null, error);
     }
 
@@ -58,37 +53,30 @@ public class CompletedRestAction<T> implements RestAction<T>
 
     @Nonnull
     @Override
-    public CompletedRestAction<T> setCheck(@Nullable BooleanSupplier checks)
-    {
+    public CompletedRestAction<T> setCheck(@Nullable BooleanSupplier checks) {
         return this;
     }
 
     @Nonnull
     @Override
-    public CompletedRestAction<T> timeout(long timeout, @Nonnull TimeUnit unit)
-    {
+    public CompletedRestAction<T> timeout(long timeout, @Nonnull TimeUnit unit) {
         return this;
     }
 
     @Nonnull
     @Override
-    public CompletedRestAction<T> deadline(long timestamp)
-    {
+    public CompletedRestAction<T> deadline(long timestamp) {
         return this;
     }
 
     @Override
-    public void queue(@Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure)
-    {
-        if (error == null)
-        {
+    public void queue(@Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure) {
+        if (error == null) {
             if (success == null)
                 RestAction.getDefaultSuccess().accept(value);
             else
                 success.accept(value);
-        }
-        else
-        {
+        } else {
             if (failure == null)
                 RestAction.getDefaultFailure().accept(error);
             else
@@ -97,10 +85,8 @@ public class CompletedRestAction<T> implements RestAction<T>
     }
 
     @Override
-    public T complete(boolean shouldQueue) throws RateLimitedException
-    {
-        if (error != null)
-        {
+    public T complete(boolean shouldQueue) throws RateLimitedException {
+        if (error != null) {
             if (error instanceof RateLimitedException)
                 throw (RateLimitedException) error;
             if (error instanceof RuntimeException)
@@ -114,8 +100,7 @@ public class CompletedRestAction<T> implements RestAction<T>
 
     @Nonnull
     @Override
-    public CompletableFuture<T> submit(boolean shouldQueue)
-    {
+    public CompletableFuture<T> submit(boolean shouldQueue) {
         CompletableFuture<T> future = new CompletableFuture<>();
         if (error != null)
             future.completeExceptionally(error);

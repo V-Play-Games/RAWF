@@ -18,13 +18,11 @@ import net.dv8tion.jda.api.utils.data.DataObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class JsonTest
-{
+public class JsonTest {
     private static final String json = "{\"int\":10,\"long\":100,\"boolean\":true,\"string\":\"test\"}";
 
     @Test
-    public void testParse()
-    {
+    public void testParse() {
         DataObject object = DataObject.fromJson(json);
         Assertions.assertEquals(10, object.getInt("int", 0));
         Assertions.assertEquals(100, object.getLong("long", 0));
@@ -33,8 +31,7 @@ public class JsonTest
     }
 
     @Test
-    public void testJsonToString()
-    {
+    public void testJsonToString() {
         DataObject object = DataObject.fromJson(json);
         String result = object.toString();
         DataObject symmetric = DataObject.fromJson(result);

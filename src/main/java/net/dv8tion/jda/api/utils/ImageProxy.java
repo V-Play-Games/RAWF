@@ -28,19 +28,14 @@ import java.util.concurrent.CompletableFuture;
  * A utility class to retrieve images.
  * <br>This supports downloading the images from the normal URL, as well as downloading the image with a specific size (width is the same as the height).
  */
-public class ImageProxy extends FileProxy
-{
+public class ImageProxy extends FileProxy {
     /**
      * Constructs a new {@link ImageProxy} for the provided URL.
      *
-     * @param  url
-     *         The URL to download the image from
-     *
-     * @throws IllegalArgumentException
-     *         If the provided URL is null
+     * @param url The URL to download the image from
+     * @throws IllegalArgumentException If the provided URL is null
      */
-    public ImageProxy(@Nonnull String url)
-    {
+    public ImageProxy(@Nonnull String url) {
         super(url);
     }
 
@@ -48,14 +43,11 @@ public class ImageProxy extends FileProxy
      * Returns the image URL for the specified size.
      * <br>The size is a best-effort resize from Discord, with recommended size values as powers of 2 such as 1024 or 512.
      *
-     * @param  size
-     *         The size of the image
-     *
+     * @param size The size of the image
      * @return URL of the image with the specified size
      */
     @Nonnull
-    public String getUrl(int size)
-    {
+    public String getUrl(int size) {
         Checks.positive(size, "Image size");
 
         return getUrl() + "?size=" + size;
@@ -67,14 +59,11 @@ public class ImageProxy extends FileProxy
      *
      * <p>If the image is not of a valid size, the CompletableFuture will hold an exception since the HTTP request would have returned a 404.
      *
-     * @param  size
-     *         The size of this image
-     *
+     * @param size The size of this image
      * @return {@link CompletableFuture} which holds an {@link InputStream}, the {@link InputStream} must be closed manually.
      */
     @Nonnull
-    public CompletableFuture<InputStream> download(int size)
-    {
+    public CompletableFuture<InputStream> download(int size) {
         return download(getUrl(size));
     }
 
@@ -85,23 +74,18 @@ public class ImageProxy extends FileProxy
      * <p>If the image is not of a valid size, the CompletableFuture will hold an exception since the HTTP request would have returned a 404.
      *
      * <p><b>Implementation note:</b>
-     *       The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
+     * The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
      *
-     * @param  size
-     *         The width and height of this image, must be positive
-     *
-     * @throws IllegalArgumentException
-     *         If any of the follow checks are true
-     *         <ul>
-     *             <li>The requested size is negative or 0</li>
-     *             <li>The URL's scheme is neither http or https</li>
-     *         </ul>
-     *
+     * @param size The width and height of this image, must be positive
      * @return {@link CompletableFuture} which holds a {@link Path} which corresponds to the location the file has been downloaded.
+     * @throws IllegalArgumentException If any of the follow checks are true
+     *                                  <ul>
+     *                                      <li>The requested size is negative or 0</li>
+     *                                      <li>The URL's scheme is neither http or https</li>
+     *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<Path> downloadToPath(int size)
-    {
+    public CompletableFuture<Path> downloadToPath(int size) {
         return downloadToPath(getUrl(size));
     }
 
@@ -112,24 +96,19 @@ public class ImageProxy extends FileProxy
      * <p>If the image is not of a valid size, the CompletableFuture will hold an exception since the HTTP request would have returned a 404.
      *
      * <p><b>Implementation note:</b>
-     *       The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
+     * The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
      *
-     * @param  file
-     *         The file in which to download the image
-     *
-     * @throws IllegalArgumentException
-     *         If any of the follow checks are true
-     *         <ul>
-     *             <li>The target file is null</li>
-     *             <li>The parent folder of the target file does not exist</li>
-     *             <li>The requested size is negative or 0</li>
-     *         </ul>
-     *
+     * @param file The file in which to download the image
      * @return {@link CompletableFuture} which holds a {@link File}, it is the same as the file passed in the parameters.
+     * @throws IllegalArgumentException If any of the follow checks are true
+     *                                  <ul>
+     *                                      <li>The target file is null</li>
+     *                                      <li>The parent folder of the target file does not exist</li>
+     *                                      <li>The requested size is negative or 0</li>
+     *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<File> downloadToFile(@Nonnull File file, int size)
-    {
+    public CompletableFuture<File> downloadToFile(@Nonnull File file, int size) {
         Checks.notNull(file, "File");
 
         final CompletableFuture<Path> downloadToPathFuture = downloadToPath(getUrl(size), file.toPath());
@@ -143,25 +122,20 @@ public class ImageProxy extends FileProxy
      * <p>If the image is not of a valid size, the CompletableFuture will hold an exception since the HTTP request would have returned a 404.
      *
      * <p><b>Implementation note:</b>
-     *       The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
-     *       <br>The given path can also target filesystems such as a ZIP filesystem.
+     * The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
+     * <br>The given path can also target filesystems such as a ZIP filesystem.
      *
-     * @param  path
-     *         The file in which to download the image
-     *
-     * @throws IllegalArgumentException
-     *         If any of the follow checks are true
-     *         <ul>
-     *             <li>The target path is null</li>
-     *             <li>The parent folder of the target path does not exist</li>
-     *             <li>The requested size is negative or 0</li>
-     *         </ul>
-     *
+     * @param path The file in which to download the image
      * @return {@link CompletableFuture} which holds a {@link Path}, it is the same as the path passed in the parameters.
+     * @throws IllegalArgumentException If any of the follow checks are true
+     *                                  <ul>
+     *                                      <li>The target path is null</li>
+     *                                      <li>The parent folder of the target path does not exist</li>
+     *                                      <li>The requested size is negative or 0</li>
+     *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<Path> downloadToPath(@Nonnull Path path, int size)
-    {
+    public CompletableFuture<Path> downloadToPath(@Nonnull Path path, int size) {
         Checks.notNull(path, "Path");
 
         return downloadToPath(getUrl(size), path);

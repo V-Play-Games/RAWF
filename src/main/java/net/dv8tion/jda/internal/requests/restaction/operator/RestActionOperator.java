@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
 import net.dv8tion.jda.api.exceptions.ContextException;
@@ -24,27 +23,23 @@ import javax.annotation.Nullable;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public abstract class RestActionOperator<I, O> implements RestAction<O>
-{
+public abstract class RestActionOperator<I, O> implements RestAction<O> {
+    protected final RestAction<I> action;
     protected BooleanSupplier check;
     protected long deadline = -1;
-    protected final RestAction<I> action;
 
-    public RestActionOperator(RestAction<I> action)
-    {
+    public RestActionOperator(RestAction<I> action) {
         this.action = action;
     }
 
-    protected static <E> void doSuccess(Consumer<? super E> callback, E value)
-    {
+    protected static <E> void doSuccess(Consumer<? super E> callback, E value) {
         if (callback == null)
             RestAction.getDefaultSuccess().accept(value);
         else
             callback.accept(value);
     }
 
-    protected static void doFailure(Consumer<? super Throwable> callback, Throwable throwable)
-    {
+    protected static void doFailure(Consumer<? super Throwable> callback, Throwable throwable) {
         if (callback == null)
             RestAction.getDefaultFailure().accept(throwable);
         else
@@ -53,17 +48,13 @@ public abstract class RestActionOperator<I, O> implements RestAction<O>
             throw (Error) throwable;
     }
 
-    protected void handle(RestAction<I> action, Consumer<? super Throwable> failure, Consumer<? super I> success)
-    {
+    protected void handle(RestAction<I> action, Consumer<? super Throwable> failure, Consumer<? super I> success) {
         Consumer<? super Throwable> catcher = contextWrap(failure);
         action.queue((result) -> {
-            try
-            {
+            try {
                 if (success != null)
                     success.accept(result);
-            }
-            catch (Throwable ex)
-            {
+            } catch (Throwable ex) {
                 doFailure(catcher, ex);
             }
         }, catcher);
@@ -78,8 +69,7 @@ public abstract class RestActionOperator<I, O> implements RestAction<O>
 
     @Nonnull
     @Override
-    public RestAction<O> setCheck(@Nullable BooleanSupplier checks)
-    {
+    public RestAction<O> setCheck(@Nullable BooleanSupplier checks) {
         this.check = checks;
         action.setCheck(checks);
         return this;
@@ -87,23 +77,20 @@ public abstract class RestActionOperator<I, O> implements RestAction<O>
 
     @Nullable
     @Override
-    public BooleanSupplier getCheck()
-    {
+    public BooleanSupplier getCheck() {
         return action.getCheck();
     }
 
     @Nonnull
     @Override
-    public RestAction<O> deadline(long timestamp)
-    {
+    public RestAction<O> deadline(long timestamp) {
         this.deadline = timestamp;
         action.deadline(timestamp);
         return this;
     }
 
     @Nullable
-    protected <T> RestAction<T> applyContext(RestAction<T> action)
-    {
+    protected <T> RestAction<T> applyContext(RestAction<T> action) {
         if (action == null)
             return null;
         if (check != null)
@@ -114,8 +101,7 @@ public abstract class RestActionOperator<I, O> implements RestAction<O>
     }
 
     @Nullable
-    protected Consumer<? super Throwable> contextWrap(@Nullable Consumer<? super Throwable> callback)
-    {
+    protected Consumer<? super Throwable> contextWrap(@Nullable Consumer<? super Throwable> callback) {
         if (callback instanceof ContextException.ContextConsumer)
             return callback;
         else if (RestAction.isPassContext())

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.requests.restaction.order;
 
 import net.dv8tion.jda.api.requests.restaction.order.OrderAction;
@@ -31,8 +30,7 @@ import java.util.function.BooleanSupplier;
 
 public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     extends RestActionImpl<Void>
-    implements OrderAction<T, M>
-{
+    implements OrderAction<T, M> {
     protected final List<T> orderList;
     protected final boolean ascendingOrder;
     protected int selectedPosition = -1;
@@ -40,26 +38,21 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     /**
      * Creates a new OrderAction instance
      *
-     * @param route
-     *        The {@link net.dv8tion.jda.internal.requests.Route.CompiledRoute CompiledRoute}
-     *        which is provided to the {@link RestActionImpl#RestActionImpl(Route.CompiledRoute, okhttp3.RequestBody) RestAction Constructor}
+     * @param route The {@link net.dv8tion.jda.internal.requests.Route.CompiledRoute CompiledRoute}
+     *              which is provided to the {@link RestActionImpl#RestActionImpl(Route.CompiledRoute, okhttp3.RequestBody) RestAction Constructor}
      */
-    public OrderActionImpl(/*JDA api,*/ Route.CompiledRoute route)
-    {
+    public OrderActionImpl(/*JDA api,*/ Route.CompiledRoute route) {
         this(true, route);
     }
 
     /**
      * Creates a new OrderAction instance
      *
-     * @param ascendingOrder
-     *        Whether or not the order of items should be ascending
-     * @param route
-     *        The {@link net.dv8tion.jda.internal.requests.Route.CompiledRoute CompiledRoute}
-     *        which is provided to the {@link RestActionImpl#RestActionImpl(Route.CompiledRoute, okhttp3.RequestBody) RestAction Constructor}
+     * @param ascendingOrder Whether or not the order of items should be ascending
+     * @param route          The {@link net.dv8tion.jda.internal.requests.Route.CompiledRoute CompiledRoute}
+     *                       which is provided to the {@link RestActionImpl#RestActionImpl(Route.CompiledRoute, okhttp3.RequestBody) RestAction Constructor}
      */
-    public OrderActionImpl(/*JDA api,*/ boolean ascendingOrder, Route.CompiledRoute route)
-    {
+    public OrderActionImpl(/*JDA api,*/ boolean ascendingOrder, Route.CompiledRoute route) {
         super(route);
         this.orderList = new ArrayList<>();
         this.ascendingOrder = ascendingOrder;
@@ -68,45 +61,39 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M setCheck(BooleanSupplier checks)
-    {
+    public M setCheck(BooleanSupplier checks) {
         return (M) super.setCheck(checks);
     }
 
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M timeout(long timeout, @Nonnull TimeUnit unit)
-    {
+    public M timeout(long timeout, @Nonnull TimeUnit unit) {
         return (M) super.timeout(timeout, unit);
     }
 
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M deadline(long timestamp)
-    {
+    public M deadline(long timestamp) {
         return (M) super.deadline(timestamp);
     }
 
     @Override
-    public boolean isAscendingOrder()
-    {
+    public boolean isAscendingOrder() {
         return ascendingOrder;
     }
 
     @Nonnull
     @Override
-    public List<T> getCurrentOrder()
-    {
+    public List<T> getCurrentOrder() {
         return Collections.unmodifiableList(orderList);
     }
 
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M selectPosition(int selectedPosition)
-    {
+    public M selectPosition(int selectedPosition) {
         Checks.notNegative(selectedPosition, "Provided selectedPosition");
         Checks.check(selectedPosition < orderList.size(), "Provided selectedPosition is too big and is out of bounds. selectedPosition: " + selectedPosition);
 
@@ -117,8 +104,7 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
 
     @Nonnull
     @Override
-    public M selectPosition(@Nonnull T selectedEntity)
-    {
+    public M selectPosition(@Nonnull T selectedEntity) {
         Checks.notNull(selectedEntity, "Channel");
         validateInput(selectedEntity);
 
@@ -126,15 +112,13 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     }
 
     @Override
-    public int getSelectedPosition()
-    {
+    public int getSelectedPosition() {
         return selectedPosition;
     }
 
     @Nonnull
     @Override
-    public T getSelectedEntity()
-    {
+    public T getSelectedEntity() {
         if (selectedPosition == -1)
             throw new IllegalStateException("No position has been selected yet");
 
@@ -143,22 +127,18 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
 
     @Nonnull
     @Override
-    public M moveUp(int amount)
-    {
+    public M moveUp(int amount) {
         Checks.notNegative(amount, "Provided amount");
         if (selectedPosition == -1)
             throw new IllegalStateException("Cannot move until an item has been selected. Use #selectPosition first.");
-        if (ascendingOrder)
-        {
+        if (ascendingOrder) {
             Checks.check(selectedPosition - amount >= 0,
-                    "Amount provided to move up is too large and would be out of bounds." +
-                            "Selected position: " + selectedPosition + " Amount: " + amount + " Largest Position: " + orderList.size());
-        }
-        else
-        {
+                "Amount provided to move up is too large and would be out of bounds." +
+                    "Selected position: " + selectedPosition + " Amount: " + amount + " Largest Position: " + orderList.size());
+        } else {
             Checks.check(selectedPosition + amount < orderList.size(),
-                    "Amount provided to move up is too large and would be out of bounds." +
-                            "Selected position: " + selectedPosition + " Amount: " + amount + " Largest Position: " + orderList.size());
+                "Amount provided to move up is too large and would be out of bounds." +
+                    "Selected position: " + selectedPosition + " Amount: " + amount + " Largest Position: " + orderList.size());
         }
 
         if (ascendingOrder)
@@ -169,23 +149,19 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
 
     @Nonnull
     @Override
-    public M moveDown(int amount)
-    {
+    public M moveDown(int amount) {
         Checks.notNegative(amount, "Provided amount");
         if (selectedPosition == -1)
             throw new IllegalStateException("Cannot move until an item has been selected. Use #selectPosition first.");
 
-        if (ascendingOrder)
-        {
+        if (ascendingOrder) {
             Checks.check(selectedPosition + amount < orderList.size(),
-                    "Amount provided to move down is too large and would be out of bounds." +
-                            "Selected position: " + selectedPosition + " Amount: " + amount + " Largest Position: " + orderList.size());
-        }
-        else
-        {
+                "Amount provided to move down is too large and would be out of bounds." +
+                    "Selected position: " + selectedPosition + " Amount: " + amount + " Largest Position: " + orderList.size());
+        } else {
             Checks.check(selectedPosition - amount >= orderList.size(),
-                    "Amount provided to move down is too large and would be out of bounds." +
-                            "Selected position: " + selectedPosition + " Amount: " + amount + " Largest Position: " + orderList.size());
+                "Amount provided to move down is too large and would be out of bounds." +
+                    "Selected position: " + selectedPosition + " Amount: " + amount + " Largest Position: " + orderList.size());
         }
 
         if (ascendingOrder)
@@ -197,8 +173,7 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M moveTo(int position)
-    {
+    public M moveTo(int position) {
         Checks.notNegative(position, "Provided position");
         Checks.check(position < orderList.size(), "Provided position is too big and is out of bounds.");
 
@@ -211,11 +186,10 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M swapPosition(int swapPosition)
-    {
+    public M swapPosition(int swapPosition) {
         Checks.notNegative(swapPosition, "Provided swapPosition");
         Checks.check(swapPosition < orderList.size(), "Provided swapPosition is too big and is out of bounds. swapPosition: "
-                + swapPosition);
+            + swapPosition);
 
         T selectedItem = orderList.get(selectedPosition);
         T swapItem = orderList.get(swapPosition);
@@ -228,8 +202,7 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M swapPosition(@Nonnull T swapEntity)
-    {
+    public M swapPosition(@Nonnull T swapEntity) {
         Checks.notNull(swapEntity, "Provided swapEntity");
         validateInput(swapEntity);
 
@@ -239,8 +212,7 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M reverseOrder()
-    {
+    public M reverseOrder() {
         Collections.reverse(this.orderList);
         return (M) this;
     }
@@ -248,8 +220,7 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M shuffleOrder()
-    {
+    public M shuffleOrder() {
         Collections.shuffle(this.orderList);
         return (M) this;
     }
@@ -257,8 +228,7 @@ public abstract class OrderActionImpl<T, M extends OrderAction<T, M>>
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M sortOrder(@Nonnull final Comparator<T> comparator)
-    {
+    public M sortOrder(@Nonnull final Comparator<T> comparator) {
         Checks.notNull(comparator, "Provided comparator");
 
         this.orderList.sort(comparator);

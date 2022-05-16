@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
@@ -26,27 +25,23 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class FlatMapRestAction<I, O> extends RestActionOperator<I, O>
-{
+public class FlatMapRestAction<I, O> extends RestActionOperator<I, O> {
     private final Function<? super I, ? extends RestAction<O>> function;
     private final Predicate<? super I> condition;
 
     public FlatMapRestAction(RestAction<I> action, Predicate<? super I> condition,
-                             Function<? super I, ? extends RestAction<O>> function)
-    {
+                             Function<? super I, ? extends RestAction<O>> function) {
         super(action);
         this.function = function;
         this.condition = condition;
     }
 
-    private RestAction<O> supply(I input)
-    {
+    private RestAction<O> supply(I input) {
         return applyContext(function.apply(input));
     }
 
     @Override
-    public void queue(@Nullable Consumer<? super O> success, @Nullable Consumer<? super Throwable> failure)
-    {
+    public void queue(@Nullable Consumer<? super O> success, @Nullable Consumer<? super Throwable> failure) {
         Consumer<? super Throwable> catcher = contextWrap(failure);
         handle(action, catcher, (result) -> {
             if (condition != null && !condition.test(result))
@@ -59,16 +54,14 @@ public class FlatMapRestAction<I, O> extends RestActionOperator<I, O>
     }
 
     @Override
-    public O complete(boolean shouldQueue) throws RateLimitedException
-    {
+    public O complete(boolean shouldQueue) throws RateLimitedException {
         return supply(action.complete(shouldQueue)).complete(shouldQueue);
     }
 
     @Nonnull
     @Override
-    public CompletableFuture<O> submit(boolean shouldQueue)
-    {
+    public CompletableFuture<O> submit(boolean shouldQueue) {
         return action.submit(shouldQueue)
-                .thenCompose((result) -> supply(result).submit(shouldQueue));
+            .thenCompose((result) -> supply(result).submit(shouldQueue));
     }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.api.requests.restaction.order;
 
 import net.dv8tion.jda.api.requests.RestAction;
@@ -31,20 +30,16 @@ import java.util.function.BooleanSupplier;
  * <br>This action contains a List or entities for the specified type {@code T} which
  * can be moved within the bounds but not removed, nor can any new entities be added.
  *
- * @param <T>
- *        The entity type for the {@link java.util.List List} of entities
- *        contained in the OrderAction's orderList
- * @param <M>
- *        The extension implementing the abstract operations of this OrderAction,
- *        this will be important for chaining convenience as it returns the specific
- *        implementation rather than a mask of this class. It allows us to implement
- *        chaining operations in this class instead of having to implement it in every
- *        inheriting class!
- *
+ * @param <T> The entity type for the {@link java.util.List List} of entities
+ *            contained in the OrderAction's orderList
+ * @param <M> The extension implementing the abstract operations of this OrderAction,
+ *            this will be important for chaining convenience as it returns the specific
+ *            implementation rather than a mask of this class. It allows us to implement
+ *            chaining operations in this class instead of having to implement it in every
+ *            inheriting class!
  * @since 3.0
  */
-public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<Void>
-{
+public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<Void> {
     @Nonnull
     @Override
     M setCheck(@Nullable BooleanSupplier checks);
@@ -78,17 +73,12 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * Selects a new current entity at the specified index
      * <br>This index is in correlation to the {@link #getCurrentOrder() current order}
      *
-     * @param  selectedPosition
-     *         The index for the new position that will be in focus for all modification
-     *         operations
-     *
-     * @throws java.lang.IllegalArgumentException
-     *         If the provided position is out-of-bounds
-     *
+     * @param selectedPosition The index for the new position that will be in focus for all modification
+     *                         operations
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    #getSelectedPosition()
-     * @see    #getSelectedEntity()
+     * @throws java.lang.IllegalArgumentException If the provided position is out-of-bounds
+     * @see #getSelectedPosition()
+     * @see #getSelectedEntity()
      */
     @Nonnull
     M selectPosition(int selectedPosition);
@@ -98,15 +88,12 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * the specified entity in the {@link #getCurrentOrder() current order}
      * <br>This is a convenience function that uses {@link #selectPosition(int)} internally
      *
-     * @param  selectedEntity
-     *         The entity for the new position that will be in focus for all modification
-     *         operations
-     *
+     * @param selectedEntity The entity for the new position that will be in focus for all modification
+     *                       operations
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    #selectPosition(int)
-     * @see    #getSelectedPosition()
-     * @see    #getSelectedEntity()
+     * @see #selectPosition(int)
+     * @see #getSelectedPosition()
+     * @see #getSelectedEntity()
      */
     @Nonnull
     M selectPosition(@Nonnull T selectedEntity);
@@ -122,10 +109,8 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
     /**
      * The entity which is currently at the {@link #getSelectedPosition() selected position}
      *
-     * @throws java.lang.IllegalStateException
-     *         If no entity has been selected yet
-     *
      * @return The currently selected entity
+     * @throws java.lang.IllegalStateException If no entity has been selected yet
      */
     @Nonnull
     T getSelectedEntity();
@@ -134,17 +119,11 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * Moves the currently selected entity {@code amount} positions <b>UP</b>
      * in order by pushing all entities down by one position.
      *
-     * @param  amount
-     *         The amount of positions that should be moved
-     *
-     * @throws java.lang.IllegalStateException
-     *         If no entity has been selected yet
-     * @throws java.lang.IllegalArgumentException
-     *         If the specified amount would cause the entity to go out-of-bounds
-     *
+     * @param amount The amount of positions that should be moved
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    #moveTo(int)
+     * @throws java.lang.IllegalStateException    If no entity has been selected yet
+     * @throws java.lang.IllegalArgumentException If the specified amount would cause the entity to go out-of-bounds
+     * @see #moveTo(int)
      */
     @Nonnull
     M moveUp(int amount);
@@ -153,17 +132,11 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * Moves the currently selected entity {@code amount} positions <b>DOWN</b>
      * in order by pushing all entities up by one position.
      *
-     * @param  amount
-     *         The amount of positions that should be moved
-     *
-     * @throws java.lang.IllegalStateException
-     *         If no entity has been selected yet
-     * @throws java.lang.IllegalArgumentException
-     *         If the specified amount would cause the entity to go out-of-bounds
-     *
+     * @param amount The amount of positions that should be moved
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    #moveTo(int)
+     * @throws java.lang.IllegalStateException    If no entity has been selected yet
+     * @throws java.lang.IllegalArgumentException If the specified amount would cause the entity to go out-of-bounds
+     * @see #moveTo(int)
      */
     @Nonnull
     M moveDown(int amount);
@@ -173,18 +146,12 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * position (0 based index). All entities are moved in the
      * direction of the left <i>hole</i> to fill the gap.
      *
-     * @param  position
-     *         The new not-negative position for the currently selected entity
-     *
-     * @throws java.lang.IllegalStateException
-     *         If no entity has been selected yet
-     * @throws java.lang.IllegalArgumentException
-     *         If the specified position is out-of-bounds
-     *
+     * @param position The new not-negative position for the currently selected entity
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    #moveDown(int)
-     * @see    #moveUp(int)
+     * @throws java.lang.IllegalStateException    If no entity has been selected yet
+     * @throws java.lang.IllegalArgumentException If the specified position is out-of-bounds
+     * @see #moveDown(int)
+     * @see #moveUp(int)
      */
     @Nonnull
     M moveTo(int position);
@@ -193,15 +160,10 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * Swaps the currently selected entity with the entity located
      * at the specified position. No other entities are affected by this operation.
      *
-     * @param  swapPosition
-     *         0 based index of target position
-     *
-     * @throws java.lang.IllegalStateException
-     *         If no entity has been selected yet
-     * @throws java.lang.IllegalArgumentException
-     *         If the specified position is out-of-bounds
-     *
+     * @param swapPosition 0 based index of target position
      * @return The current OrderAction sub-implementation instance
+     * @throws java.lang.IllegalStateException    If no entity has been selected yet
+     * @throws java.lang.IllegalArgumentException If the specified position is out-of-bounds
      */
     @Nonnull
     M swapPosition(int swapPosition);
@@ -210,19 +172,13 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * Swaps the currently selected entity with the specified entity.
      * No other entities are affected by this operation.
      *
-     * @param  swapEntity
-     *         Target entity to switch positions with
-     *
-     * @throws java.lang.IllegalStateException
-     *         If no entity has been selected yet
-     * @throws java.lang.IllegalArgumentException
-     *         If the specified position is out-of-bounds,
-     *         or if the target entity is {@code null} or not
-     *         available in this order action implementation
-     *
+     * @param swapEntity Target entity to switch positions with
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    #swapPosition(int)
+     * @throws java.lang.IllegalStateException    If no entity has been selected yet
+     * @throws java.lang.IllegalArgumentException If the specified position is out-of-bounds,
+     *                                            or if the target entity is {@code null} or not
+     *                                            available in this order action implementation
+     * @see #swapPosition(int)
      */
     @Nonnull
     M swapPosition(@Nonnull T swapEntity);
@@ -232,8 +188,7 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * {@link java.util.Collections#reverse(java.util.List) Collections.reverse(orderList)}
      *
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    java.util.Collections#reverse(java.util.List)
+     * @see java.util.Collections#reverse(java.util.List)
      */
     @Nonnull
     M reverseOrder();
@@ -243,8 +198,7 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * {@link java.util.Collections#shuffle(java.util.List) Collections.shuffle(orderList)}
      *
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    java.util.Collections#shuffle(java.util.List)
+     * @see java.util.Collections#shuffle(java.util.List)
      */
     @Nonnull
     M shuffleOrder();
@@ -254,15 +208,10 @@ public interface OrderAction<T, M extends OrderAction<T, M>> extends RestAction<
      * the specified {@link java.util.Comparator Comparator} by using
      * {@link java.util.ArrayList#sort(java.util.Comparator) ArrayList.sort(comparator)}
      *
-     * @param  comparator
-     *         Comparator used to sort the current order
-     *
-     * @throws java.lang.IllegalArgumentException
-     *         If the specified comparator is {@code null}
-     *
+     * @param comparator Comparator used to sort the current order
      * @return The current OrderAction sub-implementation instance
-     *
-     * @see    java.util.ArrayList#sort(java.util.Comparator)
+     * @throws java.lang.IllegalArgumentException If the specified comparator is {@code null}
+     * @see java.util.ArrayList#sort(java.util.Comparator)
      */
     @Nonnull
     M sortOrder(@Nonnull final Comparator<T> comparator);

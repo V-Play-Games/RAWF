@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.requests.ratelimit;
 
 import net.dv8tion.jda.api.requests.Request;
 
 import java.util.Queue;
 
-public interface IBucket
-{
+public interface IBucket {
     Queue<Request> getRequests();
 }

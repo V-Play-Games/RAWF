@@ -21,11 +21,9 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 
-public class HelpersTest
-{
+public class HelpersTest {
     @Test
-    public void testIsEmpty()
-    {
+    public void testIsEmpty() {
         Assertions.assertTrue(Helpers.isEmpty(null));
         Assertions.assertTrue(Helpers.isEmpty(""));
         Assertions.assertFalse(Helpers.isEmpty("null"));
@@ -33,8 +31,7 @@ public class HelpersTest
     }
 
     @Test
-    public void testContainsWhitespace()
-    {
+    public void testContainsWhitespace() {
         Assertions.assertTrue(Helpers.containsWhitespace(" "));
         Assertions.assertTrue(Helpers.containsWhitespace("testing with spaces"));
         Assertions.assertFalse(Helpers.containsWhitespace(null));
@@ -43,8 +40,7 @@ public class HelpersTest
     }
 
     @Test
-    public void testIsBlank()
-    {
+    public void testIsBlank() {
         Assertions.assertTrue(Helpers.isBlank(" "));
         Assertions.assertTrue(Helpers.isBlank(null));
         Assertions.assertTrue(Helpers.isBlank(""));
@@ -53,8 +49,7 @@ public class HelpersTest
     }
 
     @Test
-    public void testCountMatches()
-    {
+    public void testCountMatches() {
         Assertions.assertEquals(3, Helpers.countMatches("Hello World", 'l'));
         Assertions.assertEquals(1, Helpers.countMatches("Hello World", ' '));
         Assertions.assertEquals(0, Helpers.countMatches("Hello World", '_'));
@@ -63,8 +58,7 @@ public class HelpersTest
     }
 
     @Test
-    public void testTruncate()
-    {
+    public void testTruncate() {
         Assertions.assertEquals("Hello", Helpers.truncate("Hello World", 5));
         Assertions.assertEquals("Hello", Helpers.truncate("Hello", 5));
         Assertions.assertEquals("Hello", Helpers.truncate("Hello", 10));
@@ -74,24 +68,21 @@ public class HelpersTest
     }
 
     @Test
-    public void testRightPad()
-    {
+    public void testRightPad() {
         Assertions.assertEquals("Hello    ", Helpers.rightPad("Hello", 9));
         Assertions.assertEquals("Hello World", Helpers.rightPad("Hello World", 9));
         Assertions.assertEquals("Hello", Helpers.rightPad("Hello", 5));
     }
 
     @Test
-    public void testLeftPad()
-    {
+    public void testLeftPad() {
         Assertions.assertEquals("    Hello", Helpers.leftPad("Hello", 9));
         Assertions.assertEquals("Hello World", Helpers.leftPad("Hello World", 9));
         Assertions.assertEquals("Hello", Helpers.leftPad("Hello", 5));
     }
 
     @Test
-    public void testIsNumeric()
-    {
+    public void testIsNumeric() {
         Assertions.assertTrue(Helpers.isNumeric("10"));
         Assertions.assertTrue(Helpers.isNumeric("1"));
         Assertions.assertTrue(Helpers.isNumeric("0"));
@@ -104,8 +95,7 @@ public class HelpersTest
     }
 
     @Test
-    public void testDeepEquals()
-    {
+    public void testDeepEquals() {
         List<String> a = Arrays.asList("A", "B", "C");
         List<String> b = Arrays.asList("B", "A", "C");
         List<String> c = Arrays.asList("A", "B");

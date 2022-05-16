@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.utils.cache;
 
 import net.dv8tion.jda.api.utils.ClosableIterator;
@@ -27,33 +26,27 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class UnifiedCacheViewImpl<T, E extends CacheView<T>> implements CacheView<T>
-{
+public class UnifiedCacheViewImpl<T, E extends CacheView<T>> implements CacheView<T> {
     protected final Supplier<? extends Stream<? extends E>> generator;
 
-    public UnifiedCacheViewImpl(Supplier<? extends Stream<? extends E>> generator)
-    {
+    public UnifiedCacheViewImpl(Supplier<? extends Stream<? extends E>> generator) {
         this.generator = generator;
     }
 
     @Override
-    public long size()
-    {
+    public long size() {
         return distinctStream().mapToLong(CacheView::size).sum();
     }
 
     @Override
-    public boolean isEmpty()
-    {
+    public boolean isEmpty() {
         return distinctStream().allMatch(CacheView::isEmpty);
     }
 
     @Override
-    public void forEach(Consumer<? super T> action)
-    {
+    public void forEach(Consumer<? super T> action) {
         Objects.requireNonNull(action);
-        try (ClosableIterator<T> it = lockedIterator())
-        {
+        try (ClosableIterator<T> it = lockedIterator()) {
             while (it.hasNext())
                 action.accept(it.next());
         }
@@ -61,8 +54,7 @@ public class UnifiedCacheViewImpl<T, E extends CacheView<T>> implements CacheVie
 
     @Nonnull
     @Override
-    public List<T> asList()
-    {
+    public List<T> asList() {
         List<T> list = new LinkedList<>();
         forEach(list::add);
         return Collections.unmodifiableList(list);
@@ -70,10 +62,8 @@ public class UnifiedCacheViewImpl<T, E extends CacheView<T>> implements CacheVie
 
     @Nonnull
     @Override
-    public Set<T> asSet()
-    {
-        try (ChainedClosableIterator<T> it = lockedIterator())
-        {
+    public Set<T> asSet() {
+        try (ChainedClosableIterator<T> it = lockedIterator()) {
             //because the iterator needs to retain elements to avoid duplicates,
             // we can use the resulting HashSet as our return value!
             while (it.hasNext()) it.next();
@@ -83,45 +73,39 @@ public class UnifiedCacheViewImpl<T, E extends CacheView<T>> implements CacheVie
 
     @Nonnull
     @Override
-    public ChainedClosableIterator<T> lockedIterator()
-    {
+    public ChainedClosableIterator<T> lockedIterator() {
         Iterator<? extends E> gen = generator.get().iterator();
         return new ChainedClosableIterator<>(gen);
     }
 
     @Nonnull
     @Override
-    public List<T> getElementsByName(@Nonnull String name, boolean ignoreCase)
-    {
+    public List<T> getElementsByName(@Nonnull String name, boolean ignoreCase) {
         return Collections.unmodifiableList(distinctStream()
-                .flatMap(view -> view.getElementsByName(name, ignoreCase).stream())
-                .distinct()
-                .collect(Collectors.toList()));
+            .flatMap(view -> view.getElementsByName(name, ignoreCase).stream())
+            .distinct()
+            .collect(Collectors.toList()));
     }
 
     @Nonnull
     @Override
-    public Stream<T> stream()
-    {
+    public Stream<T> stream() {
         return distinctStream().flatMap(CacheView::stream).distinct();
     }
 
     @Nonnull
     @Override
-    public Stream<T> parallelStream()
-    {
+    public Stream<T> parallelStream() {
         return distinctStream().flatMap(CacheView::parallelStream).distinct();
     }
 
     @Nonnull
     @Override
-    public Iterator<T> iterator()
-    {
+    public Iterator<T> iterator() {
         return stream().iterator();
     }
 
-    protected Stream<? extends E> distinctStream()
-    {
+    protected Stream<? extends E> distinctStream() {
         return generator.get().distinct();
     }
 }

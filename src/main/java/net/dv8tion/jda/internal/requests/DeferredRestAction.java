@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.internal.requests;
 
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
@@ -28,9 +27,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class DeferredRestAction<T, R extends RestAction<T>> implements RestAction<T>
-{
-//    private final JDA api;
+public class DeferredRestAction<T, R extends RestAction<T>> implements RestAction<T> {
+    //    private final JDA api;
     private final Class<T> type;
     private final Supplier<T> valueSupplier;
     private final Supplier<R> actionSupplier;
@@ -40,15 +38,13 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
     private BooleanSupplier isAction;
     private BooleanSupplier transitiveChecks;
 
-    public DeferredRestAction(/*JDA api,*/ Supplier<R> actionSupplier)
-    {
+    public DeferredRestAction(/*JDA api,*/ Supplier<R> actionSupplier) {
         this(null, null, actionSupplier);
     }
 
     public DeferredRestAction(/*JDA api,*/ Class<T> type,
-                              Supplier<T> valueSupplier,
-                              Supplier<R> actionSupplier)
-    {
+                                           Supplier<T> valueSupplier,
+                                           Supplier<R> actionSupplier) {
 //        this.api = api;
         this.type = type;
         this.valueSupplier = valueSupplier;
@@ -64,52 +60,45 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
 
     @Nonnull
     @Override
-    public RestAction<T> setCheck(BooleanSupplier checks)
-    {
+    public RestAction<T> setCheck(BooleanSupplier checks) {
         this.transitiveChecks = checks;
         return this;
     }
 
     @Nullable
     @Override
-    public BooleanSupplier getCheck()
-    {
+    public BooleanSupplier getCheck() {
         return transitiveChecks;
     }
 
     @Nonnull
     @Override
-    public RestAction<T> timeout(long timeout, @Nonnull TimeUnit unit)
-    {
+    public RestAction<T> timeout(long timeout, @Nonnull TimeUnit unit) {
         Checks.notNull(unit, "TimeUnit");
         return deadline(timeout <= 0 ? 0 : System.currentTimeMillis() + unit.toMillis(timeout));
     }
 
     @Nonnull
     @Override
-    public RestAction<T> deadline(long timestamp)
-    {
+    public RestAction<T> deadline(long timestamp) {
         this.deadline = timestamp;
         return this;
     }
 
-    public RestAction<T> setCacheCheck(BooleanSupplier checks)
-    {
+    public RestAction<T> setCacheCheck(BooleanSupplier checks) {
         this.isAction = checks;
         return this;
     }
 
     @Override
-    public void queue(Consumer<? super T> success, Consumer<? super Throwable> failure)
-    {
+    public void queue(Consumer<? super T> success, Consumer<? super Throwable> failure) {
         Consumer<? super T> finalSuccess;
         if (success != null)
             finalSuccess = success;
         else
             finalSuccess = RestAction.getDefaultSuccess();
 
-        if (type == null)
-        {
+        if (type == null) {
             BooleanSupplier checks = this.isAction;
             if (checks != null && checks.getAsBoolean())
                 getAction().queue(success, failure);
@@ -119,22 +108,17 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
         }
 
         T value = valueSupplier.get();
-        if (value == null)
-        {
+        if (value == null) {
             getAction().queue(success, failure);
-        }
-        else
-        {
+        } else {
             finalSuccess.accept(value);
         }
     }
 
     @Nonnull
     @Override
-    public CompletableFuture<T> submit(boolean shouldQueue)
-    {
-        if (type == null)
-        {
+    public CompletableFuture<T> submit(boolean shouldQueue) {
+        if (type == null) {
             BooleanSupplier checks = this.isAction;
             if (checks != null && checks.getAsBoolean())
                 return getAction().submit(shouldQueue);
@@ -147,10 +131,8 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
     }
 
     @Override
-    public T complete(boolean shouldQueue) throws RateLimitedException
-    {
-        if (type == null)
-        {
+    public T complete(boolean shouldQueue) throws RateLimitedException {
+        if (type == null) {
             BooleanSupplier checks = this.isAction;
             if (checks != null && checks.getAsBoolean())
                 return getAction().complete(shouldQueue);
@@ -162,8 +144,7 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
         return getAction().complete(shouldQueue);
     }
 
-    private R getAction()
-    {
+    private R getAction() {
         R action = actionSupplier.get();
         action.setCheck(transitiveChecks);
         if (deadline >= 0)

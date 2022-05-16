@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.api.utils;
 
 import java.io.IOException;
 
 @FunctionalInterface
-public interface IOFunction<T, R>
-{
+public interface IOFunction<T, R> {
     R apply(T t) throws IOException;
 }

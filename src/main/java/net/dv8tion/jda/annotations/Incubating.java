@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.annotations;
 
 import java.lang.annotation.*;
@@ -27,6 +26,5 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.CONSTRUCTOR})
-public @interface Incubating
-{
+public @interface Incubating {
 }

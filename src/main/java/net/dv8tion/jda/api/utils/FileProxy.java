@@ -42,8 +42,7 @@ import java.util.function.Function;
 /**
  * A utility class to download files.
  */
-public class FileProxy
-{
+public class FileProxy {
     private static volatile OkHttpClient defaultHttpClient;
 
     private final String url;
@@ -52,14 +51,10 @@ public class FileProxy
     /**
      * Constructs a new {@link FileProxy} for the provided URL.
      *
-     * @param url
-     *        The URL to download from
-     *
-     * @throws IllegalArgumentException
-     *         If the provided URL is null
+     * @param url The URL to download from
+     * @throws IllegalArgumentException If the provided URL is null
      */
-    public FileProxy(@Nonnull String url)
-    {
+    public FileProxy(@Nonnull String url) {
         Checks.notNull(url, "URL");
         this.url = url;
     }
@@ -68,14 +63,10 @@ public class FileProxy
      * Sets the default OkHttpClient used by {@link FileProxy} and {@link ImageProxy}.
      * <br>This can still be overridden on a per-instance basis with {@link #withClient(OkHttpClient)}.
      *
-     * @param  httpClient
-     *         The default {@link OkHttpClient} to use while making HTTP requests
-     *
-     * @throws IllegalArgumentException
-     *         If the provided {@link OkHttpClient} is null
+     * @param httpClient The default {@link OkHttpClient} to use while making HTTP requests
+     * @throws IllegalArgumentException If the provided {@link OkHttpClient} is null
      */
-    public static void setDefaultHttpClient(@Nonnull OkHttpClient httpClient)
-    {
+    public static void setDefaultHttpClient(@Nonnull OkHttpClient httpClient) {
         Checks.notNull(httpClient, "Default OkHttpClient");
         FileProxy.defaultHttpClient = httpClient;
     }
@@ -87,45 +78,35 @@ public class FileProxy
      * @return The URL of the file.
      */
     @Nonnull
-    public String getUrl()
-    {
+    public String getUrl() {
         return url;
     }
 
     /**
      * Sets the custom OkHttpClient used by this instance, regardless of if {@link #setDefaultHttpClient(OkHttpClient)} has been used or not.
      *
-     * @param  customHttpClient
-     *         The custom {@link OkHttpClient} to use while making HTTP requests
-     *
-     * @throws IllegalArgumentException
-     *         If the provided {@link OkHttpClient} is null
-     *
+     * @param customHttpClient The custom {@link OkHttpClient} to use while making HTTP requests
      * @return This proxy for chaining convenience.
+     * @throws IllegalArgumentException If the provided {@link OkHttpClient} is null
      */
     @Nonnull
-    public FileProxy withClient(@Nonnull OkHttpClient customHttpClient)
-    {
+    public FileProxy withClient(@Nonnull OkHttpClient customHttpClient) {
         Checks.notNull(customHttpClient, "Custom HTTP client");
         this.customHttpClient = customHttpClient;
         return this;
     }
 
-
     // INTERNAL DOWNLOAD METHODS
 
-    protected OkHttpClient getHttpClient()
-    {
+    protected OkHttpClient getHttpClient() {
         // Return custom HTTP client if set
         if (customHttpClient != null)
             return customHttpClient;
 
         // Otherwise, see if a default one has been assigned
         //  If there is no client then create a default one
-        if (defaultHttpClient == null)
-        {
-            synchronized (this)
-            {
+        if (defaultHttpClient == null) {
+            synchronized (this) {
                 if (defaultHttpClient == null)
                     defaultHttpClient = new OkHttpClient();
             }
@@ -134,17 +115,15 @@ public class FileProxy
         return defaultHttpClient;
     }
 
-    protected Request getRequest(String url)
-    {
+    protected Request getRequest(String url) {
         return new Request.Builder()
-                .url(url)
-                .addHeader("user-agent", Requester.USER_AGENT)
-                .addHeader("accept-encoding", "gzip, deflate")
-                .build();
+            .url(url)
+            .addHeader("user-agent", Requester.USER_AGENT)
+            .addHeader("accept-encoding", "gzip, deflate")
+            .build();
     }
 
-    protected CompletableFuture<InputStream> download(String url)
-    {
+    protected CompletableFuture<InputStream> download(String url) {
         // We need to apply a pattern of CompletableFuture as shown here https://discord.com/channels/125227483518861312/942488867167146005/942492134446088203
         // This CompletableFuture is going to be passed to the user / other proxy methods and must not be overridden with other "completion stages" (see CF#exceptionally return type)
         // This is done in order to make cancelling these downloads actually cancel all the tasks that depends on the previous ones.
@@ -156,8 +135,7 @@ public class FileProxy
         return FutureUtil.thenApplyCancellable(downloadTask.getFuture(), Function.identity(), downloadTask::cancelCall);
     }
 
-    private DownloadTask downloadInternal(String url)
-    {
+    private DownloadTask downloadInternal(String url) {
         final CompletableFuture<InputStream> future = new CompletableFuture<>();
 
         final Request req = getRequest(url);
@@ -165,27 +143,23 @@ public class FileProxy
         final Call newCall = httpClient.newCall(req);
 
         newCall.enqueue(FunctionalCallback
-                .onFailure((call, e) -> future.completeExceptionally(new UncheckedIOException(e)))
-                .onSuccess((call, response) ->
-                {
-                    if (response.isSuccessful())
-                    {
-                        InputStream body = IOUtil.getBody(response);
-                        if (!future.complete(body))
-                            IOUtil.silentClose(response);
-                    }
-                    else
-                    {
-                        future.completeExceptionally(new HttpException(response.code() + ": " + response.message()));
+            .onFailure((call, e) -> future.completeExceptionally(new UncheckedIOException(e)))
+            .onSuccess((call, response) ->
+            {
+                if (response.isSuccessful()) {
+                    InputStream body = IOUtil.getBody(response);
+                    if (!future.complete(body))
                         IOUtil.silentClose(response);
-                    }
-                }).build());
+                } else {
+                    future.completeExceptionally(new HttpException(response.code() + ": " + response.message()));
+                    IOUtil.silentClose(response);
+                }
+            }).build());
 
         return new DownloadTask(newCall, future);
     }
 
-    protected CompletableFuture<Path> downloadToPath(String url)
-    {
+    protected CompletableFuture<Path> downloadToPath(String url) {
         final HttpUrl parsedUrl = HttpUrl.parse(url);
         Checks.check(parsedUrl != null, "URL '" + url + "' is not valid");
 
@@ -196,16 +170,14 @@ public class FileProxy
         return downloadToPath(Paths.get(fileName));
     }
 
-    protected CompletableFuture<Path> downloadToPath(String url, Path path)
-    {
+    protected CompletableFuture<Path> downloadToPath(String url, Path path) {
         //Check if the parent path, the folder, exists
         Checks.check(Files.notExists(path.getParent()), "Parent folder of the file '" + path.toAbsolutePath() + "' does not exist.");
 
         final DownloadTask downloadTask = downloadInternal(url);
 
         return FutureUtil.thenApplyCancellable(downloadTask.getFuture(), stream -> {
-            try
-            {
+            try {
                 //Temporary file follows this pattern: filename + random_number + ".part"
                 // The random number is generated until a filename becomes valid, until no file with the same name exists in the tmp directory
                 final Path tmpPath = Files.createTempFile(path.getFileName().toString(), ".part");
@@ -216,18 +188,13 @@ public class FileProxy
                 Files.copy(stream, tmpPath, StandardCopyOption.REPLACE_EXISTING);
                 Files.move(tmpPath, path, StandardCopyOption.REPLACE_EXISTING);
                 return path;
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 throw new UncheckedIOException(e);
-            }
-            finally
-            {
+            } finally {
                 IOUtil.silentClose(stream);
             }
         }, downloadTask::cancelCall);
     }
-
 
     //API DOWNLOAD METHOD
 
@@ -237,8 +204,7 @@ public class FileProxy
      * @return {@link CompletableFuture} which holds an {@link InputStream}, the {@link InputStream} must be closed manually
      */
     @Nonnull
-    public CompletableFuture<InputStream> download()
-    {
+    public CompletableFuture<InputStream> download() {
         return download(url);
     }
 
@@ -246,13 +212,12 @@ public class FileProxy
      * Downloads the data of this file, and stores it in a file with the same name as the queried file name (this would be the last segment of the URL).
      *
      * <p><b>Implementation note:</b>
-     *       The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
+     * The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
      *
      * @return {@link CompletableFuture} which holds a {@link Path} which corresponds to the location the file has been downloaded.
      */
     @Nonnull
-    public CompletableFuture<Path> downloadToPath()
-    {
+    public CompletableFuture<Path> downloadToPath() {
         return downloadToPath(url);
     }
 
@@ -260,23 +225,18 @@ public class FileProxy
      * Downloads the data of this file into the specified file.
      *
      * <p><b>Implementation note:</b>
-     *       The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
+     * The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
      *
-     * @param  file
-     *         The file in which to download the data
-     *
-     * @throws IllegalArgumentException
-     *         If any of the follow checks are true
-     *         <ul>
-     *             <li>The target file is null</li>
-     *             <li>The parent folder of the target file does not exist</li>
-     *         </ul>
-     *
+     * @param file The file in which to download the data
      * @return {@link CompletableFuture} which holds a {@link File}, it is the same as the file passed in the parameters.
+     * @throws IllegalArgumentException If any of the follow checks are true
+     *                                  <ul>
+     *                                      <li>The target file is null</li>
+     *                                      <li>The parent folder of the target file does not exist</li>
+     *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<File> downloadToFile(@Nonnull File file)
-    {
+    public CompletableFuture<File> downloadToFile(@Nonnull File file) {
         Checks.notNull(file, "File");
 
         final CompletableFuture<Path> downloadToPathFuture = downloadToPath(url, file.toPath());
@@ -287,47 +247,38 @@ public class FileProxy
      * Downloads the data of this file into the specified file.
      *
      * <p><b>Implementation note:</b>
-     *       The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
-     *       <br>The given path can also target filesystems such as a ZIP filesystem.
+     * The file is first downloaded into a temporary file, the file is then moved to its real destination when the download is complete.
+     * <br>The given path can also target filesystems such as a ZIP filesystem.
      *
-     * @param  path
-     *         The file in which to download the image
-     *
-     * @throws IllegalArgumentException
-     *         If any of the follow checks are true
-     *         <ul>
-     *             <li>The target path is null</li>
-     *             <li>The parent folder of the target path does not exist</li>
-     *         </ul>
-     *
+     * @param path The file in which to download the image
      * @return {@link CompletableFuture} which holds a {@link Path}, it is the same as the path passed in the parameters.
+     * @throws IllegalArgumentException If any of the follow checks are true
+     *                                  <ul>
+     *                                      <li>The target path is null</li>
+     *                                      <li>The parent folder of the target path does not exist</li>
+     *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<Path> downloadToPath(@Nonnull Path path)
-    {
+    public CompletableFuture<Path> downloadToPath(@Nonnull Path path) {
         Checks.notNull(path, "Path");
 
         return downloadToPath(url, path);
     }
 
-    protected static class DownloadTask
-    {
+    protected static class DownloadTask {
         private final Call call;
         private final CompletableFuture<InputStream> future;
 
-        public DownloadTask(Call call, CompletableFuture<InputStream> future)
-        {
+        public DownloadTask(Call call, CompletableFuture<InputStream> future) {
             this.call = call;
             this.future = future;
         }
 
-        protected void cancelCall()
-        {
+        protected void cancelCall() {
             call.cancel();
         }
 
-        protected CompletableFuture<InputStream> getFuture()
-        {
+        protected CompletableFuture<InputStream> getFuture() {
             return future;
         }
     }

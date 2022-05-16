@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.dv8tion.jda.api.requests;
 
 import net.dv8tion.jda.api.exceptions.ContextException;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
-import net.dv8tion.jda.internal.requests.CallbackContext;
 import net.dv8tion.jda.internal.requests.RestActionImpl;
 import net.dv8tion.jda.internal.requests.Route;
 import okhttp3.RequestBody;
@@ -32,8 +30,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public class Request<T>
-{
+public class Request<T> {
     private final RestActionImpl<T> restAction;
     private final Consumer<? super T> onSuccess;
     private final Consumer<? super Throwable> onFailure;
@@ -52,10 +49,9 @@ public class Request<T>
     private boolean isCancelled = false;
 
     public Request(
-            RestActionImpl<T> restAction, Consumer<? super T> onSuccess, Consumer<? super Throwable> onFailure,
-            BooleanSupplier checks, boolean shouldQueue, RequestBody body, Object rawBody, long deadline, boolean priority,
-            Route.CompiledRoute route, CaseInsensitiveMap<String, String> headers)
-    {
+        RestActionImpl<T> restAction, Consumer<? super T> onSuccess, Consumer<? super Throwable> onFailure,
+        BooleanSupplier checks, boolean shouldQueue, RequestBody body, Object rawBody, long deadline, boolean priority,
+        Route.CompiledRoute route, CaseInsensitiveMap<String, String> headers) {
         this.deadline = deadline;
         this.priority = priority;
         this.restAction = restAction;
@@ -76,8 +72,7 @@ public class Request<T>
 //        this.api = (JDAImpl) restAction.getJDA();
     }
 
-    public void onSuccess(T successObj)
-    {
+    public void onSuccess(T successObj) {
         if (done)
             return;
         done = true;
@@ -99,21 +94,16 @@ public class Request<T>
         });*/
     }
 
-    public void onFailure(Response response)
-    {
-        if (response.code == 429)
-        {
+    public void onFailure(Response response) {
+        if (response.code == 429) {
             onFailure(new RateLimitedException(route, response.retryAfter));
-        }
-        else
-        {
+        } else {
             onFailure(ErrorResponseException.create(
-                    ErrorResponse.fromJSON(response.optObject().orElse(null)), response));
+                ErrorResponse.fromJSON(response.optObject().orElse(null)), response));
         }
     }
 
-    public void onFailure(Throwable failException)
-    {
+    public void onFailure(Throwable failException) {
         if (done)
             return;
         done = true;
@@ -137,44 +127,35 @@ public class Request<T>
         });*/
     }
 
-    public void onCancelled()
-    {
+    public void onCancelled() {
         onFailure(new CancellationException("RestAction has been cancelled"));
     }
 
-    public void onTimeout()
-    {
+    public void onTimeout() {
         onFailure(new TimeoutException("RestAction has timed out"));
     }
 
-
     @Nonnull
-    public RestAction<T> getRestAction()
-    {
+    public RestAction<T> getRestAction() {
         return restAction;
     }
 
     @Nonnull
-    public Consumer<? super T> getOnSuccess()
-    {
+    public Consumer<? super T> getOnSuccess() {
         return onSuccess;
     }
 
     @Nonnull
-    public Consumer<? super Throwable> getOnFailure()
-    {
+    public Consumer<? super Throwable> getOnFailure() {
         return onFailure;
     }
 
-    public boolean isPriority()
-    {
+    public boolean isPriority() {
         return priority;
     }
 
-    public boolean isSkipped()
-    {
-        if (isTimeout())
-        {
+    public boolean isSkipped() {
+        if (isTimeout()) {
             onTimeout();
             return true;
         }
@@ -184,65 +165,52 @@ public class Request<T>
         return skip;
     }
 
-    private boolean isTimeout()
-    {
+    private boolean isTimeout() {
         return deadline > 0 && deadline < System.currentTimeMillis();
     }
 
-    private boolean runChecks()
-    {
-        try
-        {
+    private boolean runChecks() {
+        try {
             return isCancelled() || (checks != null && !checks.getAsBoolean());
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             onFailure(e);
             return true;
         }
     }
 
     @Nullable
-    public CaseInsensitiveMap<String, String> getHeaders()
-    {
+    public CaseInsensitiveMap<String, String> getHeaders() {
         return headers;
     }
 
     @Nonnull
-    public Route.CompiledRoute getRoute()
-    {
+    public Route.CompiledRoute getRoute() {
         return route;
     }
 
     @Nullable
-    public RequestBody getBody()
-    {
+    public RequestBody getBody() {
         return body;
     }
 
     @Nullable
-    public Object getRawBody()
-    {
+    public Object getRawBody() {
         return rawBody;
     }
 
-    public boolean shouldQueue()
-    {
+    public boolean shouldQueue() {
         return shouldQueue;
     }
 
-    public void cancel()
-    {
+    public void cancel() {
         this.isCancelled = true;
     }
 
-    public boolean isCancelled()
-    {
+    public boolean isCancelled() {
         return isCancelled;
     }
 
-    public void handleResponse(@Nonnull Response response)
-    {
+    public void handleResponse(@Nonnull Response response) {
         restAction.handleResponse(response, this);
 //        api.handleEvent(new HttpRequestEvent(this, response));
     }
