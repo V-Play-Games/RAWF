@@ -17,7 +17,6 @@ package net.dv8tion.jda.internal.utils;
 
 import net.dv8tion.jda.api.utils.ClosableIterator;
 import net.dv8tion.jda.api.utils.cache.CacheView;
-import org.slf4j.Logger;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,11 +24,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class ChainedClosableIterator<T> implements ClosableIterator<T> {
-    private final static Logger log = JDALogger.getLog(ClosableIterator.class);
     private final Set<T> items;
     private final Iterator<? extends CacheView<T>> generator;
     private ClosableIterator<T> currentIterator;
-
     private T item;
 
     public ChainedClosableIterator(Iterator<? extends CacheView<T>> generator) {
@@ -54,20 +51,14 @@ public class ChainedClosableIterator<T> implements ClosableIterator<T> {
             return true;
         // get next item from current iterator if exists
         if (currentIterator != null) {
-            if (!currentIterator.hasNext()) {
-                currentIterator.close();
-                currentIterator = null;
-            } else {
-                if (findNext()) return true;
-                currentIterator.close();
-                currentIterator = null;
+            if (findNext()) {
+                return true;
             }
+            currentIterator.close();
+            currentIterator = null;
         }
-        // get next iterator in chain
-        return processChain();
-    }
 
-    private boolean processChain() {
+        // get next iterator in chain
         while (item == null) {
             CacheView<T> view = null;
             while (generator.hasNext()) {
@@ -89,10 +80,9 @@ public class ChainedClosableIterator<T> implements ClosableIterator<T> {
     private boolean findNext() {
         while (currentIterator.hasNext()) {
             T next = currentIterator.next();
-            if (items.contains(next))
+            if (!items.add(next))
                 continue;
             item = next;
-            items.add(item); // avoid duplicates
             return true;
         }
         return false;

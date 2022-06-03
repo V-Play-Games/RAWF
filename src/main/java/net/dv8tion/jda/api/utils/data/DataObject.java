@@ -23,9 +23,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.MapType;
 import net.dv8tion.jda.api.exceptions.ParsingException;
 import net.dv8tion.jda.api.utils.MiscUtil;
-import net.dv8tion.jda.api.utils.data.etf.ExTermDecoder;
-import net.dv8tion.jda.api.utils.data.etf.ExTermEncoder;
-import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.Helpers;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
@@ -33,8 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -42,11 +39,12 @@ import java.util.function.UnaryOperator;
 /**
  * Represents a map of values used in communication with the Discord API.
  *
- * <p>Throws {@link java.lang.NullPointerException},
- * if a parameter annotated with {@link javax.annotation.Nonnull} is provided with {@code null}.
+ * <p>Throws {@link NullPointerException},
+ * if a parameter annotated with {@link Nonnull} is provided with {@code null}.
  *
  * <p>This class is not Thread-Safe.
  */
+@ParametersAreNonnullByDefault
 public class DataObject implements SerializableData {
     private static final Logger log = LoggerFactory.getLogger(DataObject.class);
     private static final ObjectMapper mapper;
@@ -64,7 +62,7 @@ public class DataObject implements SerializableData {
 
     protected final Map<String, Object> data;
 
-    protected DataObject(@Nonnull Map<String, Object> data) {
+    protected DataObject(Map<String, Object> data) {
         this.data = data;
     }
 
@@ -84,10 +82,10 @@ public class DataObject implements SerializableData {
      *
      * @param data The correctly formatted JSON payload to parse
      * @return A DataObject instance for the provided payload
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the provided json is incorrectly formatted
+     * @throws ParsingException If the provided json is incorrectly formatted
      */
     @Nonnull
-    public static DataObject fromJson(@Nonnull byte[] data) {
+    public static DataObject fromJson(byte[] data) {
         try {
             Map<String, Object> map = mapper.readValue(data, mapType);
             return new DataObject(map);
@@ -101,10 +99,10 @@ public class DataObject implements SerializableData {
      *
      * @param json The correctly formatted JSON payload to parse
      * @return A DataObject instance for the provided payload
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the provided json is incorrectly formatted
+     * @throws ParsingException If the provided json is incorrectly formatted
      */
     @Nonnull
-    public static DataObject fromJson(@Nonnull String json) {
+    public static DataObject fromJson(String json) {
         try {
             Map<String, Object> map = mapper.readValue(json, mapType);
             return new DataObject(map);
@@ -118,10 +116,10 @@ public class DataObject implements SerializableData {
      *
      * @param stream The correctly formatted JSON payload to parse
      * @return A DataObject instance for the provided payload
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the provided json is incorrectly formatted or an I/O error occurred
+     * @throws ParsingException If the provided json is incorrectly formatted or an I/O error occurred
      */
     @Nonnull
-    public static DataObject fromJson(@Nonnull InputStream stream) {
+    public static DataObject fromJson(InputStream stream) {
         try {
             Map<String, Object> map = mapper.readValue(stream, mapType);
             return new DataObject(map);
@@ -135,36 +133,14 @@ public class DataObject implements SerializableData {
      *
      * @param stream The correctly formatted JSON payload to parse
      * @return A DataObject instance for the provided payload
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the provided json is incorrectly formatted or an I/O error occurred
+     * @throws ParsingException If the provided json is incorrectly formatted or an I/O error occurred
      */
     @Nonnull
-    public static DataObject fromJson(@Nonnull Reader stream) {
+    public static DataObject fromJson(Reader stream) {
         try {
             Map<String, Object> map = mapper.readValue(stream, mapType);
             return new DataObject(map);
         } catch (IOException ex) {
-            throw new ParsingException(ex);
-        }
-    }
-
-    /**
-     * Parses using {@link ExTermDecoder}.
-     * The provided data must start with the correct version header (131).
-     *
-     * @param data The data to decode
-     * @return A DataObject instance for the provided payload
-     * @throws IllegalArgumentException                        If the provided data is null
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the provided ETF payload is incorrectly formatted or an I/O error occurred
-     * @since 4.2.1
-     */
-    @Nonnull
-    public static DataObject fromETF(@Nonnull byte[] data) {
-        Checks.notNull(data, "Data");
-        try {
-            Map<String, Object> map = ExTermDecoder.unpackMap(ByteBuffer.wrap(data));
-            return new DataObject(map);
-        } catch (Exception ex) {
-            log.error("Failed to parse ETF data {}", Arrays.toString(data), ex);
             throw new ParsingException(ex);
         }
     }
@@ -175,7 +151,7 @@ public class DataObject implements SerializableData {
      * @param key The key to check
      * @return True, if the specified key is present
      */
-    public boolean hasKey(@Nonnull String key) {
+    public boolean hasKey(String key) {
         return data.containsKey(key);
     }
 
@@ -185,7 +161,7 @@ public class DataObject implements SerializableData {
      * @param key The key to check
      * @return True, if the specified key is null or missing
      */
-    public boolean isNull(@Nonnull String key) {
+    public boolean isNull(String key) {
         return data.get(key) == null;
     }
 
@@ -195,9 +171,9 @@ public class DataObject implements SerializableData {
      * @param key  The key to check
      * @param type The type to check
      * @return True, if the type check is successful
-     * @see net.dv8tion.jda.api.utils.data.DataType#isType(Object) DataType.isType(Object)
+     * @see DataType#isType(Object) DataType.isType(Object)
      */
-    public boolean isType(@Nonnull String key, @Nonnull DataType type) {
+    public boolean isType(String key, DataType type) {
         return type.isType(data.get(key));
     }
 
@@ -206,10 +182,10 @@ public class DataObject implements SerializableData {
      *
      * @param key The key to check for a value
      * @return The resolved instance of DataObject for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the type is incorrect or no value is present for the specified key
+     * @throws ParsingException If the type is incorrect or no value is present for the specified key
      */
     @Nonnull
-    public DataObject getObject(@Nonnull String key) {
+    public DataObject getObject(String key) {
         return optObject(key).orElseThrow(() -> valueError(key, "DataObject"));
     }
 
@@ -217,12 +193,12 @@ public class DataObject implements SerializableData {
      * Resolves a DataObject to a key.
      *
      * @param key The key to check for a value
-     * @return The resolved instance of DataObject for the key, wrapped in {@link java.util.Optional}
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the type is incorrect
+     * @return The resolved instance of DataObject for the key, wrapped in {@link Optional}
+     * @throws ParsingException If the type is incorrect
      */
     @Nonnull
     @SuppressWarnings("unchecked")
-    public Optional<DataObject> optObject(@Nonnull String key) {
+    public Optional<DataObject> optObject(String key) {
         Map<String, Object> child = null;
         try {
             child = (Map<String, Object>) get(Map.class, key);
@@ -237,10 +213,10 @@ public class DataObject implements SerializableData {
      *
      * @param key The key to check for a value
      * @return The resolved instance of DataArray for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the type is incorrect or no value is present for the specified key
+     * @throws ParsingException If the type is incorrect or no value is present for the specified key
      */
     @Nonnull
-    public DataArray getArray(@Nonnull String key) {
+    public DataArray getArray(String key) {
         return optArray(key).orElseThrow(() -> valueError(key, "DataArray"));
     }
 
@@ -248,12 +224,12 @@ public class DataObject implements SerializableData {
      * Resolves a DataArray to a key.
      *
      * @param key The key to check for a value
-     * @return The resolved instance of DataArray for the key, wrapped in {@link java.util.Optional}
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the type is incorrect
+     * @return The resolved instance of DataArray for the key, wrapped in {@link Optional}
+     * @throws ParsingException If the type is incorrect
      */
     @Nonnull
     @SuppressWarnings("unchecked")
-    public Optional<DataArray> optArray(@Nonnull String key) {
+    public Optional<DataArray> optArray(String key) {
         List<Object> child = null;
         try {
             child = (List<Object>) get(List.class, key);
@@ -267,10 +243,10 @@ public class DataObject implements SerializableData {
      * Resolves any type to the provided key.
      *
      * @param key The key to check for a value
-     * @return {@link java.util.Optional} with a possible value
+     * @return {@link Optional} with a possible value
      */
     @Nonnull
-    public Optional<Object> opt(@Nonnull String key) {
+    public Optional<Object> opt(String key) {
         return Optional.ofNullable(data.get(key));
     }
 
@@ -279,11 +255,11 @@ public class DataObject implements SerializableData {
      *
      * @param key The key to check for a value
      * @return The value of any type
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is missing or null
+     * @throws ParsingException If the value is missing or null
      * @see #opt(String)
      */
     @Nonnull
-    public Object get(@Nonnull String key) {
+    public Object get(String key) {
         Object value = data.get(key);
         if (value == null)
             throw valueError(key, "any");
@@ -291,14 +267,14 @@ public class DataObject implements SerializableData {
     }
 
     /**
-     * Resolves a {@link java.lang.String} to a key.
+     * Resolves a {@link String} to a key.
      *
      * @param key The key to check for a value
      * @return The String value
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is missing or null
+     * @throws ParsingException If the value is missing or null
      */
     @Nonnull
-    public String getString(@Nonnull String key) {
+    public String getString(String key) {
         String value = getString(key, null);
         if (value == null)
             throw valueError(key, "String");
@@ -306,38 +282,38 @@ public class DataObject implements SerializableData {
     }
 
     /**
-     * Resolves a {@link java.lang.String} to a key.
+     * Resolves a {@link String} to a key.
      *
      * @param key          The key to check for a value
      * @param defaultValue Alternative value to use when no value or null value is associated with the key
      * @return The String value, or null if provided with null defaultValue
      */
     @Contract("_, !null -> !null")
-    public String getString(@Nonnull String key, @Nullable String defaultValue) {
+    public String getString(String key, @Nullable String defaultValue) {
         String value = get(String.class, key, UnaryOperator.identity(), String::valueOf);
         return value == null ? defaultValue : value;
     }
 
     /**
-     * Resolves a {@link java.lang.Boolean} to a key.
+     * Resolves a {@link Boolean} to a key.
      *
      * @param key The key to check for a value
      * @return True, if the value is present and set to true. False if the value is missing or set to false.
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is of the wrong type
+     * @throws ParsingException If the value is of the wrong type
      */
-    public boolean getBoolean(@Nonnull String key) {
+    public boolean getBoolean(String key) {
         return getBoolean(key, false);
     }
 
     /**
-     * Resolves a {@link java.lang.Boolean} to a key.
+     * Resolves a {@link Boolean} to a key.
      *
      * @param key          The key to check for a value
      * @param defaultValue Alternative value to use when no value or null value is associated with the key
      * @return True, if the value is present and set to true. False if the value is set to false. defaultValue if it is missing.
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is of the wrong type
+     * @throws ParsingException If the value is of the wrong type
      */
-    public boolean getBoolean(@Nonnull String key, boolean defaultValue) {
+    public boolean getBoolean(String key, boolean defaultValue) {
         Boolean value = get(Boolean.class, key, Boolean::parseBoolean, null);
         return value == null ? defaultValue : value;
     }
@@ -347,9 +323,9 @@ public class DataObject implements SerializableData {
      *
      * @param key The key to check for a value
      * @return The long value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is missing, null, or of the wrong type
+     * @throws ParsingException If the value is missing, null, or of the wrong type
      */
-    public long getLong(@Nonnull String key) {
+    public long getLong(String key) {
         Long value = get(Long.class, key, MiscUtil::parseLong, Number::longValue);
         if (value == null)
             throw valueError(key, "long");
@@ -362,9 +338,9 @@ public class DataObject implements SerializableData {
      * @param key          The key to check for a value
      * @param defaultValue Alternative value to use when no value or null value is associated with the key
      * @return The long value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is of the wrong type
+     * @throws ParsingException If the value is of the wrong type
      */
-    public long getLong(@Nonnull String key, long defaultValue) {
+    public long getLong(String key, long defaultValue) {
         Long value = get(Long.class, key, Long::parseLong, Number::longValue);
         return value == null ? defaultValue : value;
     }
@@ -374,9 +350,9 @@ public class DataObject implements SerializableData {
      *
      * @param key The key to check for a value
      * @return The unsigned long value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is missing, null, or of the wrong type
+     * @throws ParsingException If the value is missing, null, or of the wrong type
      */
-    public long getUnsignedLong(@Nonnull String key) {
+    public long getUnsignedLong(String key) {
         Long value = get(Long.class, key, Long::parseUnsignedLong, Number::longValue);
         if (value == null)
             throw valueError(key, "unsigned long");
@@ -389,9 +365,9 @@ public class DataObject implements SerializableData {
      * @param key          The key to check for a value
      * @param defaultValue Alternative value to use when no value or null value is associated with the key
      * @return The unsigned long value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is of the wrong type
+     * @throws ParsingException If the value is of the wrong type
      */
-    public long getUnsignedLong(@Nonnull String key, long defaultValue) {
+    public long getUnsignedLong(String key, long defaultValue) {
         Long value = get(Long.class, key, Long::parseUnsignedLong, Number::longValue);
         return value == null ? defaultValue : value;
     }
@@ -401,9 +377,9 @@ public class DataObject implements SerializableData {
      *
      * @param key The key to check for a value
      * @return The int value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is missing, null, or of the wrong type
+     * @throws ParsingException If the value is missing, null, or of the wrong type
      */
-    public int getInt(@Nonnull String key) {
+    public int getInt(String key) {
         Integer value = get(Integer.class, key, Integer::parseInt, Number::intValue);
         if (value == null)
             throw valueError(key, "int");
@@ -416,9 +392,9 @@ public class DataObject implements SerializableData {
      * @param key          The key to check for a value
      * @param defaultValue Alternative value to use when no value or null value is associated with the key
      * @return The int value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is of the wrong type
+     * @throws ParsingException If the value is of the wrong type
      */
-    public int getInt(@Nonnull String key, int defaultValue) {
+    public int getInt(String key, int defaultValue) {
         Integer value = get(Integer.class, key, Integer::parseInt, Number::intValue);
         return value == null ? defaultValue : value;
     }
@@ -428,9 +404,9 @@ public class DataObject implements SerializableData {
      *
      * @param key The key to check for a value
      * @return The unsigned int value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is missing, null, or of the wrong type
+     * @throws ParsingException If the value is missing, null, or of the wrong type
      */
-    public int getUnsignedInt(@Nonnull String key) {
+    public int getUnsignedInt(String key) {
         Integer value = get(Integer.class, key, Integer::parseUnsignedInt, Number::intValue);
         if (value == null)
             throw valueError(key, "unsigned int");
@@ -443,9 +419,9 @@ public class DataObject implements SerializableData {
      * @param key          The key to check for a value
      * @param defaultValue Alternative value to use when no value or null value is associated with the key
      * @return The unsigned int value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is of the wrong type
+     * @throws ParsingException If the value is of the wrong type
      */
-    public int getUnsignedInt(@Nonnull String key, int defaultValue) {
+    public int getUnsignedInt(String key, int defaultValue) {
         Integer value = get(Integer.class, key, Integer::parseUnsignedInt, Number::intValue);
         return value == null ? defaultValue : value;
     }
@@ -455,9 +431,9 @@ public class DataObject implements SerializableData {
      *
      * @param key The key to check for a value
      * @return The double value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is missing, null, or of the wrong type
+     * @throws ParsingException If the value is missing, null, or of the wrong type
      */
-    public double getDouble(@Nonnull String key) {
+    public double getDouble(String key) {
         Double value = get(Double.class, key, Double::parseDouble, Number::doubleValue);
         if (value == null)
             throw valueError(key, "double");
@@ -470,9 +446,9 @@ public class DataObject implements SerializableData {
      * @param key          The key to check for a value
      * @param defaultValue Alternative value to use when no value or null value is associated with the key
      * @return The double value for the key
-     * @throws net.dv8tion.jda.api.exceptions.ParsingException If the value is of the wrong type
+     * @throws ParsingException If the value is of the wrong type
      */
-    public double getDouble(@Nonnull String key, double defaultValue) {
+    public double getDouble(String key, double defaultValue) {
         Double value = get(Double.class, key, Double::parseDouble, Number::doubleValue);
         return value == null ? defaultValue : value;
     }
@@ -485,7 +461,7 @@ public class DataObject implements SerializableData {
      * @return A DataObject with the removed key
      */
     @Nonnull
-    public DataObject remove(@Nonnull String key) {
+    public DataObject remove(String key) {
         data.remove(key);
         return this;
     }
@@ -497,7 +473,7 @@ public class DataObject implements SerializableData {
      * @return A DataObject with the updated value
      */
     @Nonnull
-    public DataObject putNull(@Nonnull String key) {
+    public DataObject putNull(String key) {
         data.put(key, null);
         return this;
     }
@@ -510,7 +486,7 @@ public class DataObject implements SerializableData {
      * @return A DataObject with the updated value
      */
     @Nonnull
-    public DataObject put(@Nonnull String key, @Nullable Object value) {
+    public DataObject put(String key, @Nullable Object value) {
         if (value instanceof SerializableData)
             data.put(key, ((SerializableData) value).toData().data);
         else if (value instanceof SerializableArray)
@@ -521,9 +497,9 @@ public class DataObject implements SerializableData {
     }
 
     /**
-     * {@link java.util.Collection} of all values in this DataObject.
+     * {@link Collection} of all values in this DataObject.
      *
-     * @return {@link java.util.Collection} for all values
+     * @return {@link Collection} for all values
      */
     @Nonnull
     public Collection<Object> values() {
@@ -531,7 +507,7 @@ public class DataObject implements SerializableData {
     }
 
     /**
-     * {@link java.util.Set} of all keys in this DataObject.
+     * {@link Set} of all keys in this DataObject.
      *
      * @return {@link Set} of keys
      */
@@ -556,18 +532,6 @@ public class DataObject implements SerializableData {
         }
     }
 
-    /**
-     * Serializes this object as ETF MAP term.
-     *
-     * @return byte array containing the encoded ETF term
-     * @since 4.2.1
-     */
-    @Nonnull
-    public byte[] toETF() {
-        ByteBuffer buffer = ExTermEncoder.pack(data);
-        return Arrays.copyOfRange(buffer.array(), buffer.arrayOffset(), buffer.arrayOffset() + buffer.limit());
-    }
-
     @Override
     public String toString() {
         try {
@@ -590,7 +554,7 @@ public class DataObject implements SerializableData {
     }
 
     /**
-     * Converts this DataObject to a {@link java.util.Map}
+     * Converts this DataObject to a {@link Map}
      *
      * @return The resulting map
      */
@@ -610,12 +574,12 @@ public class DataObject implements SerializableData {
     }
 
     @Nullable
-    private <T> T get(@Nonnull Class<T> type, @Nonnull String key) {
+    private <T> T get(Class<T> type, String key) {
         return get(type, key, null, null);
     }
 
     @Nullable
-    private <T> T get(@Nonnull Class<T> type, @Nonnull String key, @Nullable Function<String, T> stringParse, @Nullable Function<Number, T> numberParse) {
+    private <T> T get(Class<T> type, String key, @Nullable Function<String, T> stringParse, @Nullable Function<Number, T> numberParse) {
         Object value = data.get(key);
         if (value == null)
             return null;

@@ -15,7 +15,6 @@
  */
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
-import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
 
 import javax.annotation.Nonnull;
@@ -35,12 +34,12 @@ public class MapRestAction<I, O> extends RestActionOperator<I, O> {
     @Override
     public void queue(@Nullable Consumer<? super O> success, @Nullable Consumer<? super Throwable> failure) {
         handle(action, failure,
-            (result) -> doSuccess(success, function.apply(result))
+            result -> doSuccess(success, function.apply(result))
         );
     }
 
     @Override
-    public O complete(boolean shouldQueue) throws RateLimitedException {
+    public O complete(boolean shouldQueue) {
         return function.apply(action.complete(shouldQueue));
     }
 

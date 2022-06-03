@@ -17,6 +17,7 @@ package net.dv8tion.jda.internal.requests.restaction.operator;
 
 import net.dv8tion.jda.api.exceptions.ContextException;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.MiscUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,24 +34,18 @@ public abstract class RestActionOperator<I, O> implements RestAction<O> {
     }
 
     protected static <E> void doSuccess(Consumer<? super E> callback, E value) {
-        if (callback == null)
-            RestAction.getDefaultSuccess().accept(value);
-        else
-            callback.accept(value);
+        MiscUtil.getRestActionSuccess(callback).accept(value);
     }
 
     protected static void doFailure(Consumer<? super Throwable> callback, Throwable throwable) {
-        if (callback == null)
-            RestAction.getDefaultFailure().accept(throwable);
-        else
-            callback.accept(throwable);
+        MiscUtil.getRestActionFailure(callback).accept(throwable);
         if (throwable instanceof Error)
             throw (Error) throwable;
     }
 
     protected void handle(RestAction<I> action, Consumer<? super Throwable> failure, Consumer<? super I> success) {
-        Consumer<? super Throwable> catcher = contextWrap(failure);
-        action.queue((result) -> {
+        Consumer<? super Throwable> catcher = ContextException.wrapIfApplicable(failure);
+        action.queue(result -> {
             try {
                 if (success != null)
                     success.accept(result);
@@ -98,14 +93,5 @@ public abstract class RestActionOperator<I, O> implements RestAction<O> {
         if (deadline >= 0)
             action.deadline(deadline);
         return action;
-    }
-
-    @Nullable
-    protected Consumer<? super Throwable> contextWrap(@Nullable Consumer<? super Throwable> callback) {
-        if (callback instanceof ContextException.ContextConsumer)
-            return callback;
-        else if (RestAction.isPassContext())
-            return ContextException.here(callback == null ? RestAction.getDefaultFailure() : callback);
-        return callback;
     }
 }

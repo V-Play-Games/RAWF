@@ -15,17 +15,15 @@
  */
 package net.dv8tion.jda.internal.requests;
 
-import net.dv8tion.jda.api.requests.Request;
-import net.dv8tion.jda.api.requests.Response;
-import net.dv8tion.jda.internal.requests.ratelimit.BotRateLimiter;
+import net.dv8tion.jda.api.requests.RateLimiter;
+import net.dv8tion.jda.api.requests.RestRequest;
+import net.dv8tion.jda.api.requests.RestResponse;
+import net.dv8tion.jda.internal.requests.ratelimit.DefaultRateLimiter;
 import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.Helpers;
 import net.dv8tion.jda.internal.utils.JDALogger;
 import net.dv8tion.jda.internal.utils.config.AuthorizationConfig;
-import okhttp3.Call;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.RequestBody;
+import okhttp3.*;
 import okhttp3.internal.http.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
@@ -43,7 +41,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 
 public class Requester {
-    public static final Logger LOG = JDALogger.getLog(Requester.class);
+    public static final Logger LOGGER = JDALogger.getLog(Requester.class);
     public static final String DISCORD_API_PREFIX = Helpers.format("https://discord.com/api/v%d/"/*, JDAInfo.DISCORD_REST_VERSION*/);
     public static final String USER_AGENT = "DiscordBot (" /*+ JDAInfo.GITHUB + ", " + JDAInfo.VERSION*/ + ")";
     public static final RequestBody EMPTY_BODY = RequestBody.create(null, new byte[0]);
@@ -55,11 +53,9 @@ public class Requester {
     private final RateLimiter rateLimiter;
 
     private final OkHttpClient httpClient;
-
+    private final ConcurrentMap<String, String> contextMap = null;
     //when we actually set the shard info we can also set the mdc context map, before it makes no sense
     private boolean isContextReady = false;
-    private final ConcurrentMap<String, String> contextMap = null;
-
     private volatile boolean retryOnTimeout = false;
 
     public Requester(/*JDA api*/) {
@@ -71,7 +67,7 @@ public class Requester {
 
         this.authConfig = authConfig;
 //        this.api = (JDAImpl) api;
-        this.rateLimiter = new BotRateLimiter(this);
+        this.rateLimiter = new DefaultRateLimiter(this);
         this.httpClient = /*this.api.getHttpClient()*/null;
     }
 
@@ -98,8 +94,8 @@ public class Requester {
         contextMap.forEach(MDC::put);
     }
 
-    public <T> void request(Request<T> apiRequest) {
-        if (rateLimiter.isStopped)
+    public <T> void request(RestRequest<T> apiRequest) {
+        if (rateLimiter.isShutdown())
             throw new RejectedExecutionException("The Requester has been stopped! No new requests can be requested!");
 
         if (apiRequest.shouldQueue())
@@ -108,7 +104,7 @@ public class Requester {
             execute(apiRequest, true);
     }
 
-    public Long execute(Request<?> apiRequest) {
+    public long execute(RestRequest<?> apiRequest) {
         return execute(apiRequest, false);
     }
 
@@ -121,20 +117,20 @@ public class Requester {
      * the request can be made again. This could either be for the Per-Route ratelimit or the Global ratelimit.
      * <br>Check if globalCooldown is {@code null} to determine if it was Per-Route or Global.
      */
-    public Long execute(Request<?> apiRequest, boolean handleOnRateLimit) {
+    public long execute(RestRequest<?> apiRequest, boolean handleOnRateLimit) {
         return execute(apiRequest, false, handleOnRateLimit);
     }
 
-    public Long execute(Request<?> apiRequest, boolean retried, boolean handleOnRatelimit) {
+    public long execute(RestRequest<?> apiRequest, boolean retried, boolean handleOnRatelimit) {
         Route.CompiledRoute route = apiRequest.getRoute();
-        Long retryAfter = rateLimiter.getRateLimit(route);
-        if (retryAfter != null && retryAfter > 0) {
+        long retryAfter = rateLimiter.getRateLimit(route);
+        if (retryAfter > 0) {
             if (handleOnRatelimit)
-                apiRequest.handleResponse(new Response(retryAfter, Collections.emptySet()));
+                apiRequest.handleResponse(new RestResponse(retryAfter, Collections.emptySet()));
             return retryAfter;
         }
 
-        okhttp3.Request.Builder builder = new okhttp3.Request.Builder();
+        Request.Builder builder = new Request.Builder();
 
         String url = DISCORD_API_PREFIX + route.getCompiledRoute();
         builder.url(url);
@@ -162,19 +158,19 @@ public class Requester {
                 builder.addHeader(header.getKey(), header.getValue());
         }
 
-        okhttp3.Request request = builder.build();
+        Request request = builder.build();
 
         Set<String> rays = new LinkedHashSet<>();
-        okhttp3.Response[] responses = new okhttp3.Response[4];
+        Response[] responses = new Response[4];
         // we have an array of all responses to later close them all at once
         //the response below this comment is used as the first successful response from the server
-        okhttp3.Response lastResponse;
+        Response lastResponse;
         try {
-            LOG.trace("Executing request {} {}", apiRequest.getRoute().getMethod(), url);
+            LOGGER.trace("Executing request {} {}", apiRequest.getRoute().getMethod(), url);
             int attempt = 0;
             do {
                 if (apiRequest.isSkipped())
-                    return null;
+                    return 0L;
 
                 Call call = httpClient.newCall(request);
                 lastResponse = call.execute();
@@ -187,7 +183,7 @@ public class Requester {
                     break; // break loop, got a successful response!
 
                 attempt++;
-                LOG.debug("Requesting {} -> {} returned status {}... retrying (attempt {})",
+                LOGGER.debug("Requesting {} -> {} returned status {}... retrying (attempt {})",
                     apiRequest.getRoute().getMethod(),
                     url, lastResponse.code(), attempt);
                 try {
@@ -195,52 +191,49 @@ public class Requester {
                     Thread.sleep(50L * attempt);
                 } catch (InterruptedException ignored) {
                 }
-            }
-            while (attempt < 3 && lastResponse.code() >= 500);
+            } while (attempt < 3 && lastResponse.code() >= 500);
 
-            LOG.trace("Finished Request {} {} with code {}", route.getMethod(), lastResponse.request().url(), lastResponse.code());
+            LOGGER.trace("Finished Request {} {} with code {}", route.getMethod(), lastResponse.request().url(), lastResponse.code());
 
             if (lastResponse.code() >= 500) {
                 //Epic failure from other end. Attempted 4 times.
-                Response response = new Response(lastResponse, -1, rays);
+                RestResponse response = new RestResponse(lastResponse, -1, rays);
                 apiRequest.handleResponse(response);
-                return null;
+                return 0L;
             }
 
             retryAfter = rateLimiter.handleResponse(route, lastResponse);
             if (!rays.isEmpty())
-                LOG.debug("Received response with following cf-rays: {}", rays);
+                LOGGER.debug("Received response with following cf-rays: {}", rays);
 
-            if (retryAfter == null)
-                apiRequest.handleResponse(new Response(lastResponse, -1, rays));
+            if (retryAfter == 0)
+                apiRequest.handleResponse(new RestResponse(lastResponse, -1, rays));
             else if (handleOnRatelimit)
-                apiRequest.handleResponse(new Response(lastResponse, retryAfter, rays));
+                apiRequest.handleResponse(new RestResponse(lastResponse, retryAfter, rays));
 
             return retryAfter;
         } catch (UnknownHostException e) {
-            LOG.error("DNS resolution failed: {}", e.getMessage());
-            apiRequest.handleResponse(new Response(e, rays));
-            return null;
+            LOGGER.error("DNS resolution failed: {}", e.getMessage());
+            apiRequest.handleResponse(new RestResponse(e, rays));
         } catch (IOException e) {
             if (retryOnTimeout && !retried && isRetry(e))
                 return execute(apiRequest, true, handleOnRatelimit);
-            LOG.error("There was an I/O error while executing a REST request: {}", e.getMessage());
-            apiRequest.handleResponse(new Response(e, rays));
-            return null;
+            LOGGER.error("There was an I/O error while executing a REST request: {}", e.getMessage());
+            apiRequest.handleResponse(new RestResponse(e, rays));
         } catch (Exception e) {
-            LOG.error("There was an unexpected error while executing a REST request", e);
-            apiRequest.handleResponse(new Response(e, rays));
-            return null;
+            LOGGER.error("There was an unexpected error while executing a REST request", e);
+            apiRequest.handleResponse(new RestResponse(e, rays));
         } finally {
-            for (okhttp3.Response r : responses) {
+            for (Response r : responses) {
                 if (r == null)
                     break;
                 r.close();
             }
         }
+        return 0L;
     }
 
-    private void applyBody(Request<?> apiRequest, okhttp3.Request.Builder builder) {
+    private void applyBody(RestRequest<?> apiRequest, Request.Builder builder) {
         String method = apiRequest.getRoute().getMethod().toString();
         RequestBody body = apiRequest.getBody();
 
@@ -250,7 +243,7 @@ public class Requester {
         builder.method(method, body);
     }
 
-    private void applyHeaders(Request<?> apiRequest, okhttp3.Request.Builder builder, boolean authorized) {
+    private void applyHeaders(RestRequest<?> apiRequest, Request.Builder builder, boolean authorized) {
         builder.header("user-agent", USER_AGENT)
             .header("accept-encoding", "gzip")
             .header("x-ratelimit-precision", "millisecond"); // still sending this in case of regressions
@@ -278,10 +271,6 @@ public class Requester {
 
     public void setRetryOnTimeout(boolean retryOnTimeout) {
         this.retryOnTimeout = retryOnTimeout;
-    }
-
-    public boolean stop() {
-        return rateLimiter.stop();
     }
 
     public void shutdown() {

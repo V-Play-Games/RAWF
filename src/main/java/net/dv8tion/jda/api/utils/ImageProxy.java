@@ -19,6 +19,7 @@ import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.FutureUtil;
 
 import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -28,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
  * A utility class to retrieve images.
  * <br>This supports downloading the images from the normal URL, as well as downloading the image with a specific size (width is the same as the height).
  */
+@ParametersAreNonnullByDefault
 public class ImageProxy extends FileProxy {
     /**
      * Constructs a new {@link ImageProxy} for the provided URL.
@@ -35,7 +37,7 @@ public class ImageProxy extends FileProxy {
      * @param url The URL to download the image from
      * @throws IllegalArgumentException If the provided URL is null
      */
-    public ImageProxy(@Nonnull String url) {
+    public ImageProxy(String url) {
         super(url);
     }
 
@@ -108,10 +110,10 @@ public class ImageProxy extends FileProxy {
      *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<File> downloadToFile(@Nonnull File file, int size) {
+    public CompletableFuture<File> downloadToFile(File file, int size) {
         Checks.notNull(file, "File");
 
-        final CompletableFuture<Path> downloadToPathFuture = downloadToPath(getUrl(size), file.toPath());
+        CompletableFuture<Path> downloadToPathFuture = downloadToPath(getUrl(size), file.toPath());
         return FutureUtil.thenApplyCancellable(downloadToPathFuture, Path::toFile);
     }
 
@@ -135,7 +137,7 @@ public class ImageProxy extends FileProxy {
      *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<Path> downloadToPath(@Nonnull Path path, int size) {
+    public CompletableFuture<Path> downloadToPath(Path path, int size) {
         Checks.notNull(path, "Path");
 
         return downloadToPath(getUrl(size), path);

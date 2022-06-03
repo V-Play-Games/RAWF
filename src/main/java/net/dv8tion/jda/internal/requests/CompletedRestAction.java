@@ -15,8 +15,8 @@
  */
 package net.dv8tion.jda.internal.requests;
 
-import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.MiscUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -72,23 +72,15 @@ public class CompletedRestAction<T> implements RestAction<T> {
     @Override
     public void queue(@Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure) {
         if (error == null) {
-            if (success == null)
-                RestAction.getDefaultSuccess().accept(value);
-            else
-                success.accept(value);
+            MiscUtil.getRestActionSuccess(success).accept(value);
         } else {
-            if (failure == null)
-                RestAction.getDefaultFailure().accept(error);
-            else
-                failure.accept(error);
+            MiscUtil.getRestActionFailure(failure).accept(error);
         }
     }
 
     @Override
-    public T complete(boolean shouldQueue) throws RateLimitedException {
+    public T complete(boolean shouldQueue) {
         if (error != null) {
-            if (error instanceof RateLimitedException)
-                throw (RateLimitedException) error;
             if (error instanceof RuntimeException)
                 throw (RuntimeException) error;
             if (error instanceof Error)
@@ -101,11 +93,9 @@ public class CompletedRestAction<T> implements RestAction<T> {
     @Nonnull
     @Override
     public CompletableFuture<T> submit(boolean shouldQueue) {
-        CompletableFuture<T> future = new CompletableFuture<>();
         if (error != null)
-            future.completeExceptionally(error);
+            return CompletableFuture.failedFuture(error);
         else
-            future.complete(value);
-        return future;
+            return CompletableFuture.completedFuture(value);
     }
 }

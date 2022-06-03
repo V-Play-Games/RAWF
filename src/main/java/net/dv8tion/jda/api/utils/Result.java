@@ -17,9 +17,7 @@ package net.dv8tion.jda.api.utils;
 
 import net.dv8tion.jda.internal.utils.Checks;
 
-import javax.annotation.CheckReturnValue;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import javax.annotation.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -34,10 +32,12 @@ import java.util.function.Supplier;
  * @param <T> The success type
  * @since 4.2.1
  */
+@ParametersAreNonnullByDefault
 public class Result<T> {
     private final T value;
     private final Throwable error;
 
+    @ParametersAreNullableByDefault
     private Result(T value, Throwable error) {
         this.value = value;
         this.error = error;
@@ -66,7 +66,7 @@ public class Result<T> {
      */
     @Nonnull
     @CheckReturnValue
-    public static <E> Result<E> failure(@Nonnull Throwable error) {
+    public static <E> Result<E> failure(Throwable error) {
         Checks.notNull(error, "Error");
         return new Result<>(null, error);
     }
@@ -82,7 +82,7 @@ public class Result<T> {
      */
     @Nonnull
     @CheckReturnValue
-    public static <E> Result<E> defer(@Nonnull Supplier<? extends E> supplier) {
+    public static <E> Result<E> defer(Supplier<? extends E> supplier) {
         Checks.notNull(supplier, "Supplier");
         try {
             return Result.success(supplier.get());
@@ -121,7 +121,7 @@ public class Result<T> {
      * @throws IllegalArgumentException If the callback is null
      */
     @Nonnull
-    public Result<T> onFailure(@Nonnull Consumer<? super Throwable> callback) {
+    public Result<T> onFailure(Consumer<? super Throwable> callback) {
         Checks.notNull(callback, "Callback");
         if (isFailure())
             callback.accept(error);
@@ -138,7 +138,7 @@ public class Result<T> {
      * @throws IllegalArgumentException If the callback is null
      */
     @Nonnull
-    public Result<T> onSuccess(@Nonnull Consumer<? super T> callback) {
+    public Result<T> onSuccess(Consumer<? super T> callback) {
         Checks.notNull(callback, "Callback");
         if (isSuccess())
             callback.accept(value);
@@ -158,7 +158,7 @@ public class Result<T> {
     @Nonnull
     @CheckReturnValue
     @SuppressWarnings("unchecked")
-    public <U> Result<U> map(@Nonnull Function<? super T, ? extends U> function) {
+    public <U> Result<U> map(Function<? super T, ? extends U> function) {
         Checks.notNull(function, "Function");
         if (isSuccess())
             return Result.defer(() -> function.apply(value));
@@ -177,7 +177,7 @@ public class Result<T> {
     @Nonnull
     @CheckReturnValue
     @SuppressWarnings("unchecked")
-    public <U> Result<U> flatMap(@Nonnull Function<? super T, ? extends Result<U>> function) {
+    public <U> Result<U> flatMap(Function<? super T, ? extends Result<U>> function) {
         Checks.notNull(function, "Function");
         try {
             if (isSuccess())
@@ -223,7 +223,7 @@ public class Result<T> {
      * @throws IllegalStateException    If the predicate returns true, the {@link Throwable#getCause() cause} will be the wrapped exception
      */
     @Nonnull
-    public Result<T> expect(@Nonnull Predicate<? super Throwable> predicate) {
+    public Result<T> expect(Predicate<? super Throwable> predicate) {
         Checks.notNull(predicate, "Predicate");
         if (isFailure() && predicate.test(error))
             throw new IllegalStateException(error);

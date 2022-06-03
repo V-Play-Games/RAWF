@@ -17,13 +17,14 @@ package net.dv8tion.jda.internal.requests;
 
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
-import net.dv8tion.jda.api.requests.Request;
-import net.dv8tion.jda.api.requests.Response;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.RestFuture;
+import net.dv8tion.jda.api.requests.RestRequest;
+import net.dv8tion.jda.api.requests.RestResponse;
 import net.dv8tion.jda.api.utils.data.DataArray;
 import net.dv8tion.jda.api.utils.data.DataObject;
 import net.dv8tion.jda.internal.utils.Checks;
+import net.dv8tion.jda.internal.utils.Helpers;
 import net.dv8tion.jda.internal.utils.JDALogger;
 import okhttp3.RequestBody;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
@@ -40,10 +41,8 @@ public class RestActionImpl<T> implements RestAction<T> {
     public static final Logger LOG = JDALogger.getLog(RestAction.class);
     protected static boolean passContext = true;
     protected static long defaultTimeout = 0;
-    private static Consumer<Object> DEFAULT_SUCCESS = o -> {
-    };
-    private static Consumer<? super Throwable> DEFAULT_FAILURE = t ->
-    {
+    private static Consumer<Object> DEFAULT_SUCCESS = Helpers.emptyConsumer();
+    private static Consumer<? super Throwable> DEFAULT_FAILURE = (Consumer<Throwable>) t -> {
         if (t instanceof CancellationException || t instanceof TimeoutException)
             LOG.debug(t.getMessage());
         else if (LOG.isDebugEnabled() || !(t instanceof ErrorResponseException))
@@ -54,10 +53,10 @@ public class RestActionImpl<T> implements RestAction<T> {
             LOG.error("RestAction queue returned failure: [{}] {}", t.getClass().getSimpleName(), t.getMessage());
     };
 
-//    protected final JDAImpl api;
+    //    protected final JDAImpl api;
     private final Route.CompiledRoute route;
     private final RequestBody data;
-    private final BiFunction<Response, Request<T>, T> handler;
+    private final BiFunction<RestResponse, RestRequest<T>, T> handler;
 
     private boolean priority = false;
     private long deadline = 0;
@@ -76,17 +75,17 @@ public class RestActionImpl<T> implements RestAction<T> {
         this(route, data, null);
     }
 
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, BiFunction<Response, Request<T>, T> handler) {
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, BiFunction<RestResponse, RestRequest<T>, T> handler) {
         this(route, (RequestBody) null, handler);
     }
 
     //    @SuppressWarnings("deprecation")
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, DataObject data, BiFunction<Response, Request<T>, T> handler) {
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, DataObject data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
         this(route, data == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, data.toJson()), handler);
         this.rawData = data;
     }
 
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, RequestBody data, BiFunction<Response, Request<T>, T> handler) {
+    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, RequestBody data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
 //        Checks.notNull(api, "api");
 //        this.api = (JDAImpl) api;
         this.route = route;
@@ -116,17 +115,16 @@ public class RestActionImpl<T> implements RestAction<T> {
     }
 
     public static void setDefaultFailure(final Consumer<? super Throwable> callback) {
-        DEFAULT_FAILURE = callback == null ? t -> {
+        DEFAULT_FAILURE = callback == null ? (Consumer<Throwable>) t -> {
         } : callback;
     }
 
-    public static Consumer<Object> getDefaultSuccess() {
+    public static <T> Consumer<? super T> getDefaultSuccess() {
         return DEFAULT_SUCCESS;
     }
 
-    public static void setDefaultSuccess(final Consumer<Object> callback) {
-        DEFAULT_SUCCESS = callback == null ? t -> {
-        } : callback;
+    public static void setDefaultSuccess(Consumer<Object> callback) {
+        DEFAULT_SUCCESS = callback == null ? Helpers.emptyConsumer() : callback;
     }
 
     public RestActionImpl<T> priority() {
@@ -187,7 +185,7 @@ public class RestActionImpl<T> implements RestAction<T> {
     }
 
     @Override
-    public T complete(boolean shouldQueue) throws RateLimitedException {
+    public T complete(boolean shouldQueue) {
         if (CallbackContext.isCallbackContext())
             throw new IllegalStateException("Preventing use of complete() in callback threads! This operation can be a deadlock cause");
         try {
@@ -195,10 +193,8 @@ public class RestActionImpl<T> implements RestAction<T> {
         } catch (CompletionException e) {
             if (e.getCause() != null) {
                 Throwable cause = e.getCause();
-                if (cause instanceof ErrorResponseException)
-                    throw (ErrorResponseException) cause.fillInStackTrace(); // this method will update the stacktrace to the current thread stack
-                if (cause instanceof RateLimitedException)
-                    throw (RateLimitedException) cause.fillInStackTrace();
+                if (cause instanceof ErrorResponseException || cause instanceof RateLimitedException)
+                    cause.fillInStackTrace(); // this method will update the stacktrace to the current thread stack
                 if (cause instanceof RuntimeException)
                     throw (RuntimeException) cause;
                 if (cause instanceof Error)
@@ -237,19 +233,17 @@ public class RestActionImpl<T> implements RestAction<T> {
     }
 
     private CheckWrapper getFinisher() {
-        BooleanSupplier pre = finalizeChecks();
-        BooleanSupplier wrapped = this.checks;
-        return (pre != null || wrapped != null) ? new CheckWrapper(wrapped, pre) : CheckWrapper.EMPTY;
+        return CheckWrapper.of(checks, finalizeChecks());
     }
 
-    public void handleResponse(Response response, Request<T> request) {
+    public void handleResponse(RestResponse response, RestRequest<T> request) {
         if (response.isOk())
             handleSuccess(response, request);
         else
             request.onFailure(response);
     }
 
-    protected void handleSuccess(Response response, Request<T> request) {
+    protected void handleSuccess(RestResponse response, RestRequest<T> request) {
         if (handler == null)
             request.onSuccess(null);
         else
@@ -281,12 +275,16 @@ public class RestActionImpl<T> implements RestAction<T> {
             }
         };
 
-        protected final BooleanSupplier pre;
-        protected final BooleanSupplier wrapped;
+        private final BooleanSupplier pre;
+        private final BooleanSupplier wrapped;
 
-        public CheckWrapper(BooleanSupplier wrapped, BooleanSupplier pre) {
+        private CheckWrapper(BooleanSupplier wrapped, BooleanSupplier pre) {
             this.pre = pre;
             this.wrapped = wrapped;
+        }
+
+        public static CheckWrapper of(BooleanSupplier wrapped, BooleanSupplier pre) {
+            return pre != null || wrapped != null ? new CheckWrapper(wrapped, pre) : EMPTY;
         }
 
         public boolean pre() {

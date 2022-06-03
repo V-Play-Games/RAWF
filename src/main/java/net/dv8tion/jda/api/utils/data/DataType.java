@@ -16,13 +16,14 @@
 package net.dv8tion.jda.api.utils.data;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNullableByDefault;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Enum constants representing possible types for a {@link net.dv8tion.jda.api.utils.data.DataObject} value.
+ * Enum constants representing possible types for a {@link DataObject} value.
  */
+@ParametersAreNullableByDefault
 public enum DataType {
     INT, FLOAT, STRING, OBJECT, ARRAY, BOOLEAN, NULL, UNKNOWN;
 
@@ -33,7 +34,7 @@ public enum DataType {
      * @return The DataType constant or {@link #UNKNOWN}
      */
     @Nonnull
-    public static DataType getType(@Nullable Object value) {
+    public static DataType getType(Object value) {
         for (DataType type : values()) {
             if (type.isType(value))
                 return type;
@@ -48,7 +49,7 @@ public enum DataType {
      * @param value The value to check
      * @return True, if the value is of this type
      */
-    public boolean isType(@Nullable Object value) {
+    public boolean isType(Object value) {
         switch (this) {
             case INT:
                 return value instanceof Integer || value instanceof Long || value instanceof Short || value instanceof Byte;

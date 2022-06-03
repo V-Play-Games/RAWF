@@ -22,9 +22,9 @@ import javax.annotation.Nonnull;
  */
 public interface SerializableData {
     /**
-     * Serialized {@link net.dv8tion.jda.api.utils.data.DataObject} for this object.
+     * Serialized {@link DataObject} for this object.
      *
-     * @return {@link net.dv8tion.jda.api.utils.data.DataObject}
+     * @return {@link DataObject}
      */
     @Nonnull
     DataObject toData();

@@ -15,7 +15,6 @@
  */
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
-import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
 
 import javax.annotation.Nonnull;
@@ -40,15 +39,14 @@ public class DelayRestAction<T> extends RestActionOperator<T, T> {
 
     @Override
     public void queue(@Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure) {
-        handle(action, failure, (result) ->
-            scheduler.schedule(() ->
-                    doSuccess(success, result),
-                delay, unit)
+        handle(action,
+            failure,
+            result -> scheduler.schedule(() -> doSuccess(success, result), delay, unit)
         );
     }
 
     @Override
-    public T complete(boolean shouldQueue) throws RateLimitedException {
+    public T complete(boolean shouldQueue) {
         T result = action.complete(shouldQueue);
         try {
             unit.sleep(delay);

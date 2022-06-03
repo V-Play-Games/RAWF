@@ -16,28 +16,31 @@
 package net.dv8tion.jda.api.exceptions;
 
 import net.dv8tion.jda.api.requests.ErrorResponse;
-import net.dv8tion.jda.api.requests.Response;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.requests.RestResponse;
 import net.dv8tion.jda.api.utils.data.DataArray;
 import net.dv8tion.jda.api.utils.data.DataObject;
 import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.Helpers;
 import net.dv8tion.jda.internal.utils.JDALogger;
+import org.jetbrains.annotations.Contract;
 
 import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Indicates an unhandled error that is returned by Discord API Request using {@link net.dv8tion.jda.api.requests.RestAction RestAction}
- * <br>It holds an {@link net.dv8tion.jda.api.requests.ErrorResponse ErrorResponse}
+ * Indicates an unhandled error that is returned by Discord API Request using {@link RestAction}
+ * <br>It holds an {@link ErrorResponse}
  *
- * @see net.dv8tion.jda.api.exceptions.ErrorHandler
+ * @see ErrorHandler
  */
+@ParametersAreNonnullByDefault
 public class ErrorResponseException extends RuntimeException {
     private final ErrorResponse errorResponse;
-    private final Response response;
+    private final RestResponse response;
     private final String meaning;
     private final int code;
     private final List<SchemaError> schemaErrors;
@@ -45,11 +48,11 @@ public class ErrorResponseException extends RuntimeException {
     /**
      * Creates a new ErrorResponseException instance
      *
-     * @param errorResponse The {@link net.dv8tion.jda.api.requests.ErrorResponse ErrorResponse} corresponding
+     * @param errorResponse The {@link ErrorResponse} corresponding
      *                      for the received error response from Discord
-     * @param response      The Discord Response causing the ErrorResponse
+     * @param response      The Discord Response causing the {@link ErrorResponse}
      */
-    private ErrorResponseException(ErrorResponse errorResponse, Response response, int code, String meaning, List<SchemaError> schemaErrors) {
+    private ErrorResponseException(ErrorResponse errorResponse, RestResponse response, int code, String meaning, List<SchemaError> schemaErrors) {
         super(code + ": " + meaning + (schemaErrors.isEmpty() ? ""
             : "\n" + schemaErrors.stream().map(SchemaError::toString).collect(Collectors.joining("\n"))));
 
@@ -62,7 +65,9 @@ public class ErrorResponseException extends RuntimeException {
         this.schemaErrors = schemaErrors;
     }
 
-    public static ErrorResponseException create(ErrorResponse errorResponse, Response response) {
+    @Contract("_, _ -> new")
+    @Nonnull
+    public static ErrorResponseException create(ErrorResponse errorResponse, RestResponse response) {
         String meaning = errorResponse.getMeaning();
         int code = errorResponse.getCode();
         List<SchemaError> schemaErrors = new ArrayList<>();
@@ -116,7 +121,7 @@ public class ErrorResponseException extends RuntimeException {
                 // We have an Array Error
                 for (String index : schemaError.keys()) {
                     DataObject properties = schemaError.getObject(index);
-                    String location = String.format("%s%s[%s].", currentLocation, name, index);
+                    String location = Helpers.format("%s%s[%s].", currentLocation, name, index);
                     if (properties.hasKey("_errors"))
                         schemaErrors.add(parseSchemaError(location.substring(0, location.length() - 1), properties));
                     else
@@ -124,7 +129,7 @@ public class ErrorResponseException extends RuntimeException {
                 }
             } else {
                 // We have a nested schema error, use recursion!
-                String location = String.format("%s%s.", currentLocation, name);
+                String location = Helpers.format("%s%s.", currentLocation, name);
                 parseSchema(schemaErrors, location, schemaError);
             }
         }
@@ -157,7 +162,7 @@ public class ErrorResponseException extends RuntimeException {
      * @throws IllegalArgumentException If provided with null or an empty collection
      */
     @Nonnull
-    public static Consumer<Throwable> ignore(@Nonnull Collection<ErrorResponse> set) {
+    public static Consumer<Throwable> ignore(Collection<ErrorResponse> set) {
         return ignore(RestAction.getDefaultFailure(), set);
     }
 
@@ -174,15 +179,14 @@ public class ErrorResponseException extends RuntimeException {
      * }
      * }</pre>
      *
-     * @param ignored        Ignored error response
-     * @param errorResponses Additional error responses to ignore
+     * @param errorResponses Eerror responses to ignore
      * @return {@link Consumer} decorator for {@link RestAction#getDefaultFailure()}
      * which ignores the specified {@link ErrorResponse ErrorResponses}
      * @throws IllegalArgumentException If provided with null
      */
     @Nonnull
-    public static Consumer<Throwable> ignore(@Nonnull ErrorResponse ignored, @Nonnull ErrorResponse... errorResponses) {
-        return ignore(RestAction.getDefaultFailure(), ignored, errorResponses);
+    public static Consumer<Throwable> ignore(ErrorResponse... errorResponses) {
+        return ignore(RestAction.getDefaultFailure(), errorResponses);
     }
 
     /**
@@ -199,15 +203,14 @@ public class ErrorResponseException extends RuntimeException {
      * }</pre>
      *
      * @param orElse         Behavior to default to if the error response is not ignored
-     * @param ignored        Ignored error response
-     * @param errorResponses Additional error responses to ignore
+     * @param errorResponses Error responses to ignore
      * @return {@link Consumer} decorator for the provided callback
      * which ignores the specified {@link ErrorResponse ErrorResponses}
      * @throws IllegalArgumentException If provided with null
      */
     @Nonnull
-    public static Consumer<Throwable> ignore(@Nonnull Consumer<? super Throwable> orElse, @Nonnull ErrorResponse ignored, @Nonnull ErrorResponse... errorResponses) {
-        return ignore(orElse, EnumSet.of(ignored, errorResponses));
+    public static Consumer<Throwable> ignore(Consumer<? super Throwable> orElse, ErrorResponse... errorResponses) {
+        return ignore(orElse, Set.of(errorResponses));
     }
 
     /**
@@ -230,19 +233,17 @@ public class ErrorResponseException extends RuntimeException {
      * @throws IllegalArgumentException If provided with null or an empty collection
      */
     @Nonnull
-    public static Consumer<Throwable> ignore(@Nonnull Consumer<? super Throwable> orElse, @Nonnull Collection<ErrorResponse> set) {
+    public static Consumer<Throwable> ignore(Consumer<? super Throwable> orElse, Collection<ErrorResponse> set) {
         Checks.notNull(orElse, "Callback");
         Checks.notEmpty(set, "Ignored collection");
-        // Make an enum set copy (for performance, memory efficiency, and thread-safety)
-        final EnumSet<ErrorResponse> ignored = EnumSet.copyOf(set);
-        return new ErrorHandler(orElse).ignore(ignored);
+        return new ErrorHandler(orElse).ignore(Set.copyOf(set));
     }
 
     /**
      * Whether this is an internal server error from discord (status 500)
      *
      * @return True, if this is an internal server error
-     * {@link net.dv8tion.jda.api.requests.ErrorResponse#SERVER_ERROR ErrorResponse.SERVER_ERROR}
+     * {@link ErrorResponse#SERVER_ERROR ErrorResponse.SERVER_ERROR}
      */
     public boolean isServerError() {
         return errorResponse == ErrorResponse.SERVER_ERROR;
@@ -269,21 +270,20 @@ public class ErrorResponseException extends RuntimeException {
     }
 
     /**
-     * The {@link net.dv8tion.jda.api.requests.ErrorResponse ErrorResponse} corresponding
-     * for the received error response from Discord
+     * The {@link ErrorResponse} corresponding for the received error response from Discord
      *
-     * @return {@link net.dv8tion.jda.api.requests.ErrorResponse ErrorResponse}
+     * @return {@link ErrorResponse}
      */
     public ErrorResponse getErrorResponse() {
         return errorResponse;
     }
 
     /**
-     * The Discord Response causing the ErrorResponse
+     * The Discord Response causing the {@link ErrorResponse}
      *
-     * @return {@link net.dv8tion.jda.api.requests.Response Response}
+     * @return {@link RestResponse}
      */
-    public Response getResponse() {
+    public RestResponse getResponse() {
         return response;
     }
 
@@ -291,7 +291,7 @@ public class ErrorResponseException extends RuntimeException {
      * The {@link SchemaError SchemaErrors} for this error response.
      * <br>These errors provide more context of what part in the body caused the error, and more explanation for the error itself.
      *
-     * @return Possibly-empty list of {@link SchemaError SchemaError}
+     * @return Possibly-empty list of {@link SchemaError}
      */
     @Nonnull
     public List<SchemaError> getSchemaErrors() {

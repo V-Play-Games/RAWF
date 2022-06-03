@@ -22,6 +22,7 @@ import net.dv8tion.jda.internal.utils.Checks;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +34,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * {@link net.dv8tion.jda.api.requests.RestAction RestAction} specification used
+ * {@link RestAction RestAction} specification used
  * to retrieve entities for paginated endpoints (before, after, limit).
  * <br>Note that this implementation is not considered thread-safe as modifications to the cache are not done
  * with a lock. Calling methods on this class from multiple threads is not recommended.
@@ -78,6 +79,7 @@ import java.util.stream.StreamSupport;
  * @param <T> The type of entity to paginate
  * @since 3.1
  */
+@ParametersAreNonnullByDefault
 public interface PaginationAction<T, M extends PaginationAction<T, M>> extends RestAction<List<T>>, Iterable<T> {
     /**
      * Skips past the specified ID for successive requests.
@@ -91,8 +93,8 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <h4>Example</h4>
      * <pre>{@code
      * public MessagePaginationAction getOlderThan(MessageChannel channel, long time) {
-     *     final long timestamp = TimeUtil.getDiscordTimestamp(time);
-     *     final MessagePaginationAction paginator = channel.getIterableHistory();
+     *     long timestamp = TimeUtil.getDiscordTimestamp(time);
+     *     MessagePaginationAction paginator = channel.getIterableHistory();
      *     return paginator.skipTo(timestamp);
      * }
      *
@@ -108,7 +110,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @param id The snowflake ID to skip before, this is exclusive rather than inclusive
      * @return The current PaginationAction for chaining convenience
      * @throws IllegalArgumentException If cache is enabled, and you are attempting to skip forward in time {@literal (id > last)}
-     * @see java.util.concurrent.TimeUnit
+     * @see TimeUnit
      */
     @Nonnull
     M skipTo(long id);
@@ -128,62 +130,11 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
 
     @Nonnull
     @Override
-    M timeout(long timeout, @Nonnull TimeUnit unit);
+    M timeout(long timeout, TimeUnit unit);
 
     @Nonnull
     @Override
     M deadline(long timestamp);
-
-    /**
-     * The supported {@link PaginationOrder PaginationOrders} for this pagination action.
-     * <br>All enum values that are not returned will cause a throw for {@link #order(PaginationOrder)}.
-     *
-     * <p>Most pagination endpoints only support a single order, however some endpoints such as message pagination supports both.
-     *
-     * @return {@link EnumSet} of {@link PaginationOrder} (Modifying this set does not affect this class)
-     */
-    @Nonnull
-    default EnumSet<PaginationOrder> getSupportedOrders() {
-        return EnumSet.allOf(PaginationOrder.class);
-    }
-
-    /**
-     * The current iteration order.
-     * <br>This defaults to {@link PaginationOrder#BACKWARD}, meaning most recent first, for most pagination endpoints.
-     *
-     * @return The {@link PaginationOrder}
-     * @see #order(PaginationOrder)
-     */
-    @Nonnull
-    PaginationOrder getOrder();
-
-    /**
-     * Configure the {@link PaginationOrder} of this pagination action.
-     *
-     * <p>You can only supply supported orders, see {@link #getSupportedOrders()}.
-     *
-     * @param order The pagination order
-     * @return The current PaginationAction implementation instance
-     * @throws IllegalArgumentException If the provided pagination order is null or unsupported
-     * @throws IllegalStateException    If this pagination action has already been used to retrieve entities
-     * @see #getSupportedOrders()
-     * @see #reverse()
-     */
-    @Nonnull
-    M order(@Nonnull PaginationOrder order);
-
-    /**
-     * Flips the {@link #order(PaginationOrder)} of this pagination action.
-     *
-     * @return The current PaginationAction implementation instance
-     * @throws IllegalArgumentException If this pagination action does not support the reversed order
-     */
-    @Nonnull
-    default M reverse() {
-        if (getOrder() == PaginationOrder.BACKWARD)
-            return order(PaginationOrder.FORWARD);
-        return order(PaginationOrder.BACKWARD);
-    }
 
     /**
      * The current amount of cached entities for this PaginationAction
@@ -202,13 +153,13 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
 
     /**
      * The currently cached entities of recent execution tasks.
-     * <br>Every {@link net.dv8tion.jda.api.requests.RestAction RestAction} success
+     * <br>Every {@link RestAction RestAction} success
      * adds to this List. (Thread-Safe due to {@link java.util.concurrent.CopyOnWriteArrayList CopyOnWriteArrayList})
      *
      * <p><b>This <u>does not</u> contain all entities for the paginated endpoint unless the pagination has reached an end!</b>
      * <br>It only contains those entities which already have been retrieved.
      *
-     * @return Immutable {@link java.util.List List} containing all currently cached entities for this PaginationAction
+     * @return Immutable {@link List List} containing all currently cached entities for this PaginationAction
      */
     @Nonnull
     List<T> getCached();
@@ -217,7 +168,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * The most recent entity retrieved by this PaginationAction instance
      *
      * @return The most recent cached entity
-     * @throws java.util.NoSuchElementException If no entities have been retrieved yet (see {@link #isEmpty()})
+     * @throws NoSuchElementException If no entities have been retrieved yet (see {@link #isEmpty()})
      */
     @Nonnull
     T getLast();
@@ -226,7 +177,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * The first cached entity retrieved by this PaginationAction instance
      *
      * @return The very first cached entity
-     * @throws java.util.NoSuchElementException If no entities have been retrieved yet (see {@link #isEmpty()})
+     * @throws NoSuchElementException If no entities have been retrieved yet (see {@link #isEmpty()})
      */
     @Nonnull
     T getFirst();
@@ -246,10 +197,10 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * @param limit The limit to use
      * @return The current PaginationAction implementation instance
-     * @throws java.lang.IllegalArgumentException If the provided limit is out of range
+     * @throws IllegalArgumentException If the provided limit is out of range
      */
     @Nonnull
-    M limit(final int limit);
+    M limit(int limit);
 
     /**
      * Whether already retrieved entities should be stored
@@ -264,12 +215,12 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @return The current PaginationAction implementation instance
      */
     @Nonnull
-    M cache(final boolean enableCache);
+    M cache(boolean enableCache);
 
     /**
      * Whether retrieved entities are stored within an
      * internal cache. If this is {@code false} entities
-     * retrieved by the iterator or a call to a {@link net.dv8tion.jda.api.requests.RestAction RestAction}
+     * retrieved by the iterator or a call to a {@link RestAction RestAction}
      * terminal operation will not be retrievable from {@link #getCached()}.
      * <br>This being disabled allows unused entities to be removed from
      * the memory heap by the garbage collector. If this is enabled this will not
@@ -322,7 +273,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @see #takeUntilAsync(Predicate)
      */
     @Nonnull
-    default CompletableFuture<List<T>> takeWhileAsync(@Nonnull final Predicate<? super T> rule) {
+    default CompletableFuture<List<T>> takeWhileAsync(Predicate<? super T> rule) {
         Checks.notNull(rule, "Rule");
         return takeUntilAsync(rule.negate());
     }
@@ -340,7 +291,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @see #takeUntilAsync(int, Predicate)
      */
     @Nonnull
-    default CompletableFuture<List<T>> takeWhileAsync(int limit, @Nonnull final Predicate<? super T> rule) {
+    default CompletableFuture<List<T>> takeWhileAsync(int limit, Predicate<? super T> rule) {
         Checks.notNull(rule, "Rule");
         return takeUntilAsync(limit, rule.negate());
     }
@@ -357,7 +308,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @see #takeUntilAsync(int, Predicate)
      */
     @Nonnull
-    default CompletableFuture<List<T>> takeUntilAsync(@Nonnull final Predicate<? super T> rule) {
+    default CompletableFuture<List<T>> takeUntilAsync(Predicate<? super T> rule) {
         return takeUntilAsync(0, rule);
     }
 
@@ -374,12 +325,12 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @see #takeUntilAsync(int, Predicate)
      */
     @Nonnull
-    default CompletableFuture<List<T>> takeUntilAsync(int limit, @Nonnull final Predicate<? super T> rule) {
+    default CompletableFuture<List<T>> takeUntilAsync(int limit, Predicate<? super T> rule) {
         Checks.notNull(rule, "Rule");
         Checks.notNegative(limit, "Limit");
         List<T> result = new ArrayList<>();
         CompletableFuture<List<T>> future = new CompletableFuture<>();
-        CompletableFuture<?> handle = forEachAsync((element) -> {
+        CompletableFuture<?> handle = forEachAsync(element -> {
             if (rule.test(element))
                 return false;
             result.add(element);
@@ -399,7 +350,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <br>This also includes already cached entities similar to {@link #forEachAsync(Procedure)}.
      *
      * @param amount The maximum amount to retrieve
-     * @return {@link java.util.concurrent.CompletableFuture CompletableFuture} - Type: {@link java.util.List List}
+     * @return {@link CompletableFuture CompletableFuture} - Type: {@link List List}
      * @see #forEachAsync(Procedure)
      */
     @Nonnull
@@ -410,7 +361,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <br>Unlike {@link #takeAsync(int)} this does not include already cached entities.
      *
      * @param amount The maximum amount to retrieve
-     * @return {@link java.util.concurrent.CompletableFuture CompletableFuture} - Type: {@link java.util.List List}
+     * @return {@link CompletableFuture CompletableFuture} - Type: {@link List List}
      * @see #forEachRemainingAsync(Procedure)
      */
     @Nonnull
@@ -442,12 +393,12 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * }
      * }</pre>
      *
-     * @param action {@link net.dv8tion.jda.api.utils.Procedure Procedure} returning {@code true} if iteration should continue!
+     * @param action {@link Procedure Procedure} returning {@code true} if iteration should continue!
      * @return {@link java.util.concurrent.Future Future} that can be cancelled to stop iteration from outside!
-     * @throws java.lang.IllegalArgumentException If the provided Procedure is {@code null}
+     * @throws IllegalArgumentException If the provided Procedure is {@code null}
      */
     @Nonnull
-    default CompletableFuture<?> forEachAsync(@Nonnull final Procedure<? super T> action) {
+    default CompletableFuture<?> forEachAsync(Procedure<? super T> action) {
         return forEachAsync(action, RestActionImpl.getDefaultFailure());
     }
 
@@ -478,13 +429,13 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * }
      * }</pre>
      *
-     * @param action  {@link net.dv8tion.jda.api.utils.Procedure Procedure} returning {@code true} if iteration should continue!
-     * @param failure {@link java.util.function.Consumer Consumer} that should handle any throwables from the action
+     * @param action  {@link Procedure Procedure} returning {@code true} if iteration should continue!
+     * @param failure {@link Consumer Consumer} that should handle any throwables from the action
      * @return {@link java.util.concurrent.Future Future} that can be cancelled to stop iteration from outside!
-     * @throws java.lang.IllegalArgumentException If the provided Procedure or the failure Consumer is {@code null}
+     * @throws IllegalArgumentException If the provided Procedure or the failure Consumer is {@code null}
      */
     @Nonnull
-    CompletableFuture<?> forEachAsync(@Nonnull final Procedure<? super T> action, @Nonnull final Consumer<? super Throwable> failure);
+    CompletableFuture<?> forEachAsync(Procedure<? super T> action, Consumer<? super Throwable> failure);
 
     /**
      * Iterates over all remaining entities until the provided action returns {@code false}!
@@ -513,12 +464,12 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * }
      * }</pre>
      *
-     * @param action {@link net.dv8tion.jda.api.utils.Procedure Procedure} returning {@code true} if iteration should continue!
+     * @param action {@link Procedure Procedure} returning {@code true} if iteration should continue!
      * @return {@link java.util.concurrent.Future Future} that can be cancelled to stop iteration from outside!
-     * @throws java.lang.IllegalArgumentException If the provided Procedure is {@code null}
+     * @throws IllegalArgumentException If the provided Procedure is {@code null}
      */
     @Nonnull
-    default CompletableFuture<?> forEachRemainingAsync(@Nonnull final Procedure<? super T> action) {
+    default CompletableFuture<?> forEachRemainingAsync(Procedure<? super T> action) {
         return forEachRemainingAsync(action, RestActionImpl.getDefaultFailure());
     }
 
@@ -549,13 +500,13 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * }
      * }</pre>
      *
-     * @param action  {@link net.dv8tion.jda.api.utils.Procedure Procedure} returning {@code true} if iteration should continue!
-     * @param failure {@link java.util.function.Consumer Consumer} that should handle any throwables from the action
+     * @param action  {@link Procedure Procedure} returning {@code true} if iteration should continue!
+     * @param failure {@link Consumer Consumer} that should handle any throwables from the action
      * @return {@link java.util.concurrent.Future Future} that can be cancelled to stop iteration from outside!
-     * @throws java.lang.IllegalArgumentException If the provided Procedure or the failure Consumer is {@code null}
+     * @throws IllegalArgumentException If the provided Procedure or the failure Consumer is {@code null}
      */
     @Nonnull
-    CompletableFuture<?> forEachRemainingAsync(@Nonnull final Procedure<? super T> action, @Nonnull final Consumer<? super Throwable> failure);
+    CompletableFuture<?> forEachRemainingAsync(Procedure<? super T> action, Consumer<? super Throwable> failure);
 
     /**
      * Iterates over all remaining entities until the provided action returns {@code false}!
@@ -563,10 +514,10 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * <p><b>This is a blocking operation that might take a while to complete</b>
      *
-     * @param action The {@link net.dv8tion.jda.api.utils.Procedure Procedure}
+     * @param action The {@link Procedure Procedure}
      *               which should return {@code true} to continue iterating
      */
-    void forEachRemaining(@Nonnull final Procedure<? super T> action);
+    void forEachRemaining(Procedure<? super T> action);
 
     @Override
     default Spliterator<T> spliterator() {
@@ -574,7 +525,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
     }
 
     /**
-     * A sequential {@link java.util.stream.Stream Stream} with this PaginationAction as its source.
+     * A sequential {@link Stream Stream} with this PaginationAction as its source.
      *
      * @return a sequential {@code Stream} over the elements in this PaginationAction
      */
@@ -584,7 +535,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
     }
 
     /**
-     * Returns a possibly parallel {@link java.util.stream.Stream Stream} with this PaginationAction as its
+     * Returns a possibly parallel {@link Stream Stream} with this PaginationAction as its
      * source. It is allowable for this method to return a sequential stream.
      *
      * @return a sequential {@code Stream} over the elements in this PaginationAction
@@ -605,42 +556,12 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
     PaginationIterator<T> iterator();
 
     /**
-     * Defines the pagination order for a pagination endpoint.
-     */
-    enum PaginationOrder {
-        /**
-         * Iterates backwards in time, listing the most recent entities first.
-         */
-        BACKWARD("before"),
-        /**
-         * Iterates forward in time, listing the oldest entities first.
-         */
-        FORWARD("after");
-
-        private final String key;
-
-        PaginationOrder(String key) {
-            this.key = key;
-        }
-
-        /**
-         * The API query parameter key
-         *
-         * @return The query key
-         */
-        @Nonnull
-        public String getKey() {
-            return key;
-        }
-    }
-
-    /**
      * Iterator implementation for a {@link PaginationAction PaginationAction}.
      * <br>This iterator will first iterate over all currently cached entities and continue to retrieve new entities
      * as needed.
      *
      * <p>To retrieve new entities after reaching the end of the current cache, this iterator will
-     * request a List of new entities through a call of {@link net.dv8tion.jda.api.requests.RestAction#complete() RestAction.complete()}.
+     * request a List of new entities through a call of {@link RestAction#complete() RestAction.complete()}.
      * <br><b>It is recommended to use the highest possible limit for this task. (see {@link #limit(int)})</b>
      */
     class PaginationIterator<E> implements Iterator<E> {

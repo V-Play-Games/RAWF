@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.dv8tion.jda.annotations;
+package net.dv8tion.jda.internal.requests;
 
-import java.lang.annotation.*;
+import net.dv8tion.jda.api.requests.RateLimiter;
 
-/**
- * Functionality annotated with Incubating might change in a future release.
- * This means the binary interface or similar changes could disrupt the updating process.
- *
- * <p>This will often be done for API features that are not officially released to bots or in general, yet.
- */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.CONSTRUCTOR})
-public @interface Incubating {
+public abstract class AbstractRateLimiter implements RateLimiter {
+    protected final Requester requester;
+    protected volatile boolean shutdown = false;
+
+    protected AbstractRateLimiter(Requester requester) {
+        this.requester = requester;
+    }
+
+    @Override
+    public void shutdown() {
+        shutdown = true;
+    }
+
+    @Override
+    public boolean isShutdown() {
+        return shutdown;
+    }
 }

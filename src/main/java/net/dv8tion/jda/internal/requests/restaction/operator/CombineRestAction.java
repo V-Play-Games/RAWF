@@ -15,7 +15,6 @@
  */
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
-import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.MiscUtil;
 import net.dv8tion.jda.internal.utils.Checks;
@@ -76,10 +75,9 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O> {
     public BooleanSupplier getCheck() {
         BooleanSupplier check1 = action1.getCheck();
         BooleanSupplier check2 = action2.getCheck();
-        return () ->
-            (check1 == null || check1.getAsBoolean())
-                && (check2 == null || check2.getAsBoolean())
-                && !failed;
+        return () -> (check1 == null || check1.getAsBoolean())
+            && (check2 == null || check2.getAsBoolean())
+            && !failed;
     }
 
     @Nonnull
@@ -97,14 +95,12 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O> {
         AtomicBoolean done2 = new AtomicBoolean(false);
         AtomicReference<I1> result1 = new AtomicReference<>();
         AtomicReference<I2> result2 = new AtomicReference<>();
-        Consumer<Throwable> failureCallback = (e) ->
-        {
+        Consumer<Throwable> failureCallback = e -> {
             if (failed) return;
             failed = true;
             RestActionOperator.doFailure(failure, e);
         };
-        action1.queue((s) -> MiscUtil.locked(lock, () ->
-        {
+        action1.queue(s -> MiscUtil.locked(lock, () -> {
             try {
                 done1.set(true);
                 result1.set(s);
@@ -114,8 +110,7 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O> {
                 failureCallback.accept(e);
             }
         }), failureCallback);
-        action2.queue((s) -> MiscUtil.locked(lock, () ->
-        {
+        action2.queue(s -> MiscUtil.locked(lock, () -> {
             try {
                 done2.set(true);
                 result2.set(s);
@@ -128,7 +123,7 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O> {
     }
 
     @Override
-    public O complete(boolean shouldQueue) throws RateLimitedException {
+    public O complete(boolean shouldQueue) {
         if (!shouldQueue)
             return accumulator.apply(action1.complete(false), action2.complete(false));
         try {
@@ -137,8 +132,6 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O> {
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException)
                 throw (RuntimeException) cause;
-            else if (cause instanceof RateLimitedException)
-                throw (RateLimitedException) cause;
             throw e;
         }
     }

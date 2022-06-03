@@ -60,7 +60,7 @@ public class EncodingUtil {
      * @param unicode Provided unicode in the form of <code>\​uXXXX</code> or <code>U+XXXX</code>
      * @return Never-null String containing the encoded unicode
      */
-    public static String encodeReaction(String unicode) {
+    public static String encodeCodepointUTF8(String unicode) {
         if (unicode.startsWith("U+") || unicode.startsWith("u+"))
             return encodeCodepointsUTF8(unicode);
         else

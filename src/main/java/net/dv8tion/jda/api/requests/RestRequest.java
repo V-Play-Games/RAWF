@@ -16,7 +16,6 @@
 package net.dv8tion.jda.api.requests;
 
 import net.dv8tion.jda.api.exceptions.ContextException;
-import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.internal.requests.RestActionImpl;
 import net.dv8tion.jda.internal.requests.Route;
@@ -30,7 +29,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public class Request<T> {
+public class RestRequest<T> {
     private final RestActionImpl<T> restAction;
     private final Consumer<? super T> onSuccess;
     private final Consumer<? super Throwable> onFailure;
@@ -48,7 +47,7 @@ public class Request<T> {
     private boolean done = false;
     private boolean isCancelled = false;
 
-    public Request(
+    public RestRequest(
         RestActionImpl<T> restAction, Consumer<? super T> onSuccess, Consumer<? super Throwable> onFailure,
         BooleanSupplier checks, boolean shouldQueue, RequestBody body, Object rawBody, long deadline, boolean priority,
         Route.CompiledRoute route, CaseInsensitiveMap<String, String> headers) {
@@ -56,12 +55,7 @@ public class Request<T> {
         this.priority = priority;
         this.restAction = restAction;
         this.onSuccess = onSuccess;
-        if (onFailure instanceof ContextException.ContextConsumer)
-            this.onFailure = onFailure;
-        else if (RestActionImpl.isPassContext())
-            this.onFailure = ContextException.here(onFailure);
-        else
-            this.onFailure = onFailure;
+        this.onFailure = ContextException.wrapIfApplicable(onFailure);
         this.checks = checks;
         this.shouldQueue = shouldQueue;
         this.body = body;
@@ -94,12 +88,12 @@ public class Request<T> {
         });*/
     }
 
-    public void onFailure(Response response) {
+    public void onFailure(RestResponse response) {
         if (response.code == 429) {
             onFailure(new RateLimitedException(route, response.retryAfter));
         } else {
-            onFailure(ErrorResponseException.create(
-                ErrorResponse.fromJSON(response.optObject().orElse(null)), response));
+//            onFailure(ErrorResponseException.create(
+//                ErrorResponse.fromJSON(response.optObject().orElse(null)), response));
         }
     }
 
@@ -171,7 +165,7 @@ public class Request<T> {
 
     private boolean runChecks() {
         try {
-            return isCancelled() || (checks != null && !checks.getAsBoolean());
+            return isCancelled() || checks != null && !checks.getAsBoolean();
         } catch (Exception e) {
             onFailure(e);
             return true;
@@ -210,7 +204,7 @@ public class Request<T> {
         return isCancelled;
     }
 
-    public void handleResponse(@Nonnull Response response) {
+    public void handleResponse(@Nonnull RestResponse response) {
         restAction.handleResponse(response, this);
 //        api.handleEvent(new HttpRequestEvent(this, response));
     }

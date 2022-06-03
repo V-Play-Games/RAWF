@@ -17,7 +17,6 @@ package net.dv8tion.jda.internal.utils;
 
 import javax.annotation.Nullable;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.function.Consumer;
@@ -30,7 +29,7 @@ import java.util.function.Consumer;
 public final class Helpers {
     private static final ZoneOffset OFFSET = ZoneOffset.of("+00:00");
     @SuppressWarnings("rawtypes")
-    private static final Consumer EMPTY_CONSUMER = (v) -> {
+    private static final Consumer EMPTY_CONSUMER = v -> {
     };
 
     @SuppressWarnings("unchecked")
@@ -40,11 +39,6 @@ public final class Helpers {
 
     public static OffsetDateTime toOffset(long instant) {
         return OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), OFFSET);
-    }
-
-    public static long toTimestamp(String iso8601String) {
-        TemporalAccessor joinedAt = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(iso8601String);
-        return Instant.from(joinedAt).toEpochMilli();
     }
 
     public static OffsetDateTime toOffsetDateTime(@Nullable TemporalAccessor temporal) {
@@ -82,11 +76,11 @@ public final class Helpers {
 
     // ## StringUtils ##
 
-    public static boolean isEmpty(final CharSequence seq) {
+    public static boolean isEmpty(CharSequence seq) {
         return seq == null || seq.length() == 0;
     }
 
-    public static boolean containsWhitespace(final CharSequence seq) {
+    public static boolean containsWhitespace(CharSequence seq) {
         if (isEmpty(seq))
             return false;
         for (int i = 0; i < seq.length(); i++) {
@@ -96,7 +90,7 @@ public final class Helpers {
         return false;
     }
 
-    public static boolean isBlank(final CharSequence seq) {
+    public static boolean isBlank(CharSequence seq) {
         if (isEmpty(seq))
             return true;
         for (int i = 0; i < seq.length(); i++) {
@@ -106,7 +100,7 @@ public final class Helpers {
         return true;
     }
 
-    public static int countMatches(final CharSequence seq, final char c) {
+    public static int countMatches(CharSequence seq, char c) {
         if (isEmpty(seq))
             return 0;
         int count = 0;
@@ -117,7 +111,7 @@ public final class Helpers {
         return count;
     }
 
-    public static String truncate(final String input, final int maxWidth) {
+    public static String truncate(String input, int maxWidth) {
         if (input == null)
             return null;
         Checks.notNegative(maxWidth, "maxWidth");
@@ -128,27 +122,15 @@ public final class Helpers {
         return input.substring(0, maxWidth);
     }
 
-    public static String rightPad(final String input, final int size) {
-        int pads = size - input.length();
-        if (pads <= 0)
-            return input;
-        StringBuilder out = new StringBuilder(input);
-        for (int i = pads; i > 0; i--)
-            out.append(' ');
-        return out.toString();
+    public static String rightPad(String input, int size) {
+        return input + " ".repeat(Math.max(0, size - input.length()));
     }
 
-    public static String leftPad(final String input, final int size) {
-        int pads = size - input.length();
-        if (pads <= 0)
-            return input;
-        StringBuilder out = new StringBuilder();
-        for (int i = pads; i > 0; i--)
-            out.append(' ');
-        return out.append(input).toString();
+    public static String leftPad(String input, int size) {
+        return " ".repeat(Math.max(0, size - input.length())) + input;
     }
 
-    public static boolean isNumeric(final String input) {
+    public static boolean isNumeric(String input) {
         if (isEmpty(input))
             return false;
         for (char c : input.toCharArray()) {
@@ -158,7 +140,7 @@ public final class Helpers {
         return true;
     }
 
-    public static int codePointLength(final String string) {
+    public static int codePointLength(String string) {
         return string.codePointCount(0, string.length());
     }
 

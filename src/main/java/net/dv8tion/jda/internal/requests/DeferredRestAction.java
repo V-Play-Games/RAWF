@@ -15,8 +15,8 @@
  */
 package net.dv8tion.jda.internal.requests;
 
-import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.MiscUtil;
 import net.dv8tion.jda.internal.utils.Checks;
 
 import javax.annotation.Nonnull;
@@ -92,11 +92,7 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
 
     @Override
     public void queue(Consumer<? super T> success, Consumer<? super Throwable> failure) {
-        Consumer<? super T> finalSuccess;
-        if (success != null)
-            finalSuccess = success;
-        else
-            finalSuccess = RestAction.getDefaultSuccess();
+        Consumer<? super T> finalSuccess = MiscUtil.getRestActionSuccess(success);
 
         if (type == null) {
             BooleanSupplier checks = this.isAction;
@@ -131,7 +127,7 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
     }
 
     @Override
-    public T complete(boolean shouldQueue) throws RateLimitedException {
+    public T complete(boolean shouldQueue) {
         if (type == null) {
             BooleanSupplier checks = this.isAction;
             if (checks != null && checks.getAsBoolean())

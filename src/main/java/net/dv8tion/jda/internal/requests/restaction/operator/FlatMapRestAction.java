@@ -15,7 +15,7 @@
  */
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
-import net.dv8tion.jda.api.exceptions.RateLimitedException;
+import net.dv8tion.jda.api.exceptions.ContextException;
 import net.dv8tion.jda.api.requests.RestAction;
 
 import javax.annotation.Nonnull;
@@ -42,8 +42,8 @@ public class FlatMapRestAction<I, O> extends RestActionOperator<I, O> {
 
     @Override
     public void queue(@Nullable Consumer<? super O> success, @Nullable Consumer<? super Throwable> failure) {
-        Consumer<? super Throwable> catcher = contextWrap(failure);
-        handle(action, catcher, (result) -> {
+        Consumer<? super Throwable> catcher = ContextException.wrapIfApplicable(failure);
+        handle(action, catcher, result -> {
             if (condition != null && !condition.test(result))
                 return;
             RestAction<O> then = supply(result);
@@ -54,7 +54,7 @@ public class FlatMapRestAction<I, O> extends RestActionOperator<I, O> {
     }
 
     @Override
-    public O complete(boolean shouldQueue) throws RateLimitedException {
+    public O complete(boolean shouldQueue) {
         return supply(action.complete(shouldQueue)).complete(shouldQueue);
     }
 
@@ -62,6 +62,6 @@ public class FlatMapRestAction<I, O> extends RestActionOperator<I, O> {
     @Override
     public CompletableFuture<O> submit(boolean shouldQueue) {
         return action.submit(shouldQueue)
-            .thenCompose((result) -> supply(result).submit(shouldQueue));
+            .thenCompose(result -> supply(result).submit(shouldQueue));
     }
 }

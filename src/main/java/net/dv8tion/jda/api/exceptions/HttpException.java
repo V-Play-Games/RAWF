@@ -15,12 +15,23 @@
  */
 package net.dv8tion.jda.api.exceptions;
 
+/**
+ * Indicates that we received an unexpected response code
+ */
 public class HttpException extends RuntimeException {
-    public HttpException(String message) {
+    private final int code;
+
+    public HttpException(String message, int code) {
         super(message);
+        this.code = code;
     }
 
-    public HttpException(String message, Throwable cause) {
-        super(message, cause);
+    /**
+     * The unexpected response code
+     *
+     * @return the return code
+     */
+    public int getCode() {
+        return code;
     }
 }

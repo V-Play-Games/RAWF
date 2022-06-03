@@ -15,7 +15,7 @@
  */
 package net.dv8tion.jda.internal.requests.restaction.operator;
 
-import net.dv8tion.jda.api.exceptions.RateLimitedException;
+import net.dv8tion.jda.api.exceptions.ContextException;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.internal.utils.Helpers;
 import org.jetbrains.annotations.Contract;
@@ -39,8 +39,8 @@ public class FlatMapErrorRestAction<T> extends RestActionOperator<T, T> {
 
     @Override
     public void queue(@Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure) {
-        Consumer<? super Throwable> contextFailure = contextWrap(failure);
-        action.queue(success, contextWrap((error) -> {
+        Consumer<? super Throwable> contextFailure = ContextException.wrapIfApplicable(failure);
+        action.queue(success, ContextException.wrapIfApplicable(error -> {
             try {
                 if (check.test(error)) {
                     // If check passed we can apply the fallback function and flatten it
@@ -57,7 +57,7 @@ public class FlatMapErrorRestAction<T> extends RestActionOperator<T, T> {
     }
 
     @Override
-    public T complete(boolean shouldQueue) throws RateLimitedException {
+    public T complete(boolean shouldQueue) {
         try {
             return action.complete(shouldQueue);
         } catch (Throwable error) {
@@ -71,8 +71,6 @@ public class FlatMapErrorRestAction<T> extends RestActionOperator<T, T> {
             } catch (Throwable e) {
                 if (e instanceof IllegalStateException && e.getCause() == error)
                     throw (IllegalStateException) e;
-                else if (e instanceof RateLimitedException)
-                    throw (RateLimitedException) Helpers.appendCause(e, error);
                 else
                     fail(Helpers.appendCause(e, error));
             }
@@ -84,22 +82,19 @@ public class FlatMapErrorRestAction<T> extends RestActionOperator<T, T> {
     @Nonnull
     @Override
     public CompletableFuture<T> submit(boolean shouldQueue) {
-        return action.submit(shouldQueue)
-            .handle((result, error) -> {
-                if (check.test(error))
-                    return map.apply(error).submit(shouldQueue).thenApply(x -> (T) x);
-                else
-                    return CompletableFuture.completedFuture(result);
-            }).thenCompose(Function.identity());
+        return action.submit(shouldQueue).handle((result, error) -> check.test(error)
+            ? map.apply(error).submit(shouldQueue).thenApply(x -> (T) x)
+            : CompletableFuture.completedFuture(result)
+        ).thenCompose(Function.identity());
     }
 
     @Contract("_ -> fail")
-    private void fail(Throwable error) {
-        if (error instanceof RuntimeException)
-            throw (RuntimeException) error;
-        else if (error instanceof Error)
-            throw (Error) error;
+    private void fail(Throwable throwable) {
+        if (throwable instanceof RuntimeException)
+            throw (RuntimeException) throwable;
+        else if (throwable instanceof Error)
+            throw (Error) throwable;
         else
-            throw new RuntimeException(error);
+            throw new RuntimeException(throwable);
     }
 }

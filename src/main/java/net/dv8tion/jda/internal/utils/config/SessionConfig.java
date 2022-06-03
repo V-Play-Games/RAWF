@@ -15,7 +15,6 @@
  */
 package net.dv8tion.jda.internal.utils.config;
 
-import com.neovisionaries.ws.client.WebSocketFactory;
 import okhttp3.OkHttpClient;
 
 import javax.annotation.Nonnull;
@@ -23,26 +22,16 @@ import javax.annotation.Nullable;
 
 public class SessionConfig {
     private final OkHttpClient httpClient;
-    private final WebSocketFactory webSocketFactory;
-    private final int largeThreshold;
     private final int maxReconnectDelay;
 
-    public SessionConfig(
-        @Nullable OkHttpClient httpClient,
-        @Nullable WebSocketFactory webSocketFactory, int maxReconnectDelay, int largeThreshold) {
+    public SessionConfig(@Nullable OkHttpClient httpClient, int maxReconnectDelay) {
         this.httpClient = httpClient;
-        this.webSocketFactory = webSocketFactory == null ? newWebSocketFactory() : webSocketFactory;
         this.maxReconnectDelay = maxReconnectDelay;
-        this.largeThreshold = largeThreshold;
-    }
-
-    private static WebSocketFactory newWebSocketFactory() {
-        return new WebSocketFactory().setConnectionTimeout(10000);
     }
 
     @Nonnull
     public static SessionConfig getDefault() {
-        return new SessionConfig(new OkHttpClient(), null, 900, 250);
+        return new SessionConfig(new OkHttpClient(), 900);
     }
 
     public void setAutoReconnect(boolean autoReconnect) {
@@ -53,16 +42,7 @@ public class SessionConfig {
         return httpClient;
     }
 
-    @Nonnull
-    public WebSocketFactory getWebSocketFactory() {
-        return webSocketFactory;
-    }
-
     public int getMaxReconnectDelay() {
         return maxReconnectDelay;
-    }
-
-    public int getLargeThreshold() {
-        return largeThreshold;
     }
 }

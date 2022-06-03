@@ -16,10 +16,9 @@
 package net.dv8tion.jda.api.utils;
 
 import net.dv8tion.jda.api.utils.cache.CacheView;
-import net.dv8tion.jda.internal.utils.JDALogger;
-import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.locks.Lock;
@@ -47,11 +46,10 @@ import java.util.concurrent.locks.Lock;
  * @since 4.0.0
  */
 public class LockIterator<T> implements ClosableIterator<T> {
-    private final static Logger log = JDALogger.getLog(ClosableIterator.class);
     private final Iterator<? extends T> it;
     private Lock lock;
 
-    public LockIterator(@Nonnull Iterator<? extends T> it, Lock lock) {
+    public LockIterator(@Nonnull Iterator<? extends T> it, @Nullable Lock lock) {
         this.it = it;
         this.lock = lock;
     }

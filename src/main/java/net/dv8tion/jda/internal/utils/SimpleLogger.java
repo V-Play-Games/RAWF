@@ -22,6 +22,7 @@ import org.slf4j.helpers.Util;
 import org.slf4j.spi.LocationAwareLogger;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.security.AccessController;
@@ -88,17 +89,17 @@ class SimpleLogger extends MarkerIgnoringBase {
         } catch (SecurityException e) {
             // Ignore
         }
-        return (prop == null) ? SIMPLE_LOGGER_PROPS.getProperty(name) : prop;
+        return prop == null ? SIMPLE_LOGGER_PROPS.getProperty(name) : prop;
     }
 
     private static String getStringProperty(String name, String defaultValue) {
         String prop = getStringProperty(name);
-        return (prop == null) ? defaultValue : prop;
+        return prop == null ? defaultValue : prop;
     }
 
     private static boolean getBooleanProperty(String name, boolean defaultValue) {
         String prop = getStringProperty(name);
-        return (prop == null) ? defaultValue : "true".equalsIgnoreCase(prop);
+        return prop == null ? defaultValue : "true".equalsIgnoreCase(prop);
     }
 
     static void init() {
@@ -158,7 +159,7 @@ class SimpleLogger extends MarkerIgnoringBase {
             try {
                 SIMPLE_LOGGER_PROPS.load(in);
                 in.close();
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 // ignored
             }
         }
@@ -184,7 +185,7 @@ class SimpleLogger extends MarkerIgnoringBase {
         String tempName = name;
         String levelString = null;
         int indexOfLastDot = tempName.length();
-        while ((levelString == null) && (indexOfLastDot > -1)) {
+        while (levelString == null && indexOfLastDot > -1) {
             tempName = tempName.substring(0, indexOfLastDot);
             levelString = getStringProperty(LOG_KEY_PREFIX + tempName, null);
             indexOfLastDot = tempName.lastIndexOf(".");
@@ -292,7 +293,7 @@ class SimpleLogger extends MarkerIgnoringBase {
     protected boolean isLevelEnabled(int logLevel) {
         // log level are numerically ordered so can use simple numeric
         // comparison
-        return (logLevel >= currentLogLevel);
+        return logLevel >= currentLogLevel;
     }
 
     public boolean isTraceEnabled() {

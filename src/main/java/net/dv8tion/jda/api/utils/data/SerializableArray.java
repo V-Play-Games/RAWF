@@ -22,9 +22,9 @@ import javax.annotation.Nonnull;
  */
 public interface SerializableArray {
     /**
-     * Serialized {@link net.dv8tion.jda.api.utils.data.DataArray} for this object.
+     * Serialized {@link DataArray} for this object.
      *
-     * @return {@link net.dv8tion.jda.api.utils.data.DataArray}
+     * @return {@link DataArray}
      */
     @Nonnull
     DataArray toDataArray();

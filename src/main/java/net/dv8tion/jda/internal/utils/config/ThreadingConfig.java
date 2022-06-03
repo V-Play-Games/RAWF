@@ -23,27 +23,17 @@ import java.util.concurrent.*;
 import java.util.function.Supplier;
 
 public class ThreadingConfig {
-    private final Object audioLock = new Object();
-
     private ScheduledExecutorService rateLimitPool;
-    private ScheduledExecutorService gatewayPool;
     private ExecutorService callbackPool;
-    private ExecutorService eventPool;
-    private ScheduledExecutorService audioPool;
 
     private boolean shutdownRateLimitPool;
-    private boolean shutdownGatewayPool;
     private boolean shutdownCallbackPool;
-    private boolean shutdownEventPool;
-    private boolean shutdownAudioPool;
 
     public ThreadingConfig() {
         this.callbackPool = ForkJoinPool.commonPool();
 
         this.shutdownRateLimitPool = true;
-        this.shutdownGatewayPool = true;
         this.shutdownCallbackPool = false;
-        this.shutdownAudioPool = true;
     }
 
     @Nonnull
@@ -66,42 +56,19 @@ public class ThreadingConfig {
         this.shutdownRateLimitPool = shutdown;
     }
 
-    public void setGatewayPool(@Nullable ScheduledExecutorService executor, boolean shutdown) {
-        this.gatewayPool = executor;
-        this.shutdownGatewayPool = shutdown;
-    }
-
     public void setCallbackPool(@Nullable ExecutorService executor, boolean shutdown) {
         this.callbackPool = executor == null ? ForkJoinPool.commonPool() : executor;
         this.shutdownCallbackPool = shutdown;
     }
 
-    public void setEventPool(@Nullable ExecutorService executor, boolean shutdown) {
-        this.eventPool = executor;
-        this.shutdownEventPool = shutdown;
-    }
-
-    public void setAudioPool(@Nullable ScheduledExecutorService executor, boolean shutdown) {
-        this.audioPool = executor;
-        this.shutdownAudioPool = shutdown;
-    }
-
     public void init(@Nonnull Supplier<String> identifier) {
         if (this.rateLimitPool == null)
             this.rateLimitPool = newScheduler(5, identifier, "RateLimit", false);
-        if (this.gatewayPool == null)
-            this.gatewayPool = newScheduler(1, identifier, "Gateway");
     }
 
     public void shutdown() {
         if (shutdownCallbackPool)
             callbackPool.shutdown();
-        if (shutdownGatewayPool)
-            gatewayPool.shutdown();
-        if (shutdownEventPool && eventPool != null)
-            eventPool.shutdown();
-        if (shutdownAudioPool && audioPool != null)
-            audioPool.shutdown();
         if (shutdownRateLimitPool) {
             if (rateLimitPool instanceof ScheduledThreadPoolExecutor) {
                 ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) rateLimitPool;
@@ -121,14 +88,8 @@ public class ThreadingConfig {
     public void shutdownNow() {
         if (shutdownCallbackPool)
             callbackPool.shutdownNow();
-        if (shutdownGatewayPool)
-            gatewayPool.shutdownNow();
         if (shutdownRateLimitPool)
             rateLimitPool.shutdownNow();
-        if (shutdownEventPool && eventPool != null)
-            eventPool.shutdownNow();
-        if (shutdownAudioPool && audioPool != null)
-            audioPool.shutdownNow();
     }
 
     @Nonnull
@@ -137,50 +98,15 @@ public class ThreadingConfig {
     }
 
     @Nonnull
-    public ScheduledExecutorService getGatewayPool() {
-        return gatewayPool;
-    }
-
-    @Nonnull
     public ExecutorService getCallbackPool() {
         return callbackPool;
-    }
-
-    @Nullable
-    public ExecutorService getEventPool() {
-        return eventPool;
-    }
-
-    @Nullable
-    public ScheduledExecutorService getAudioPool(@Nonnull Supplier<String> identifier) {
-        ScheduledExecutorService pool = audioPool;
-        if (pool == null) {
-            synchronized (audioLock) {
-                pool = audioPool;
-                if (pool == null)
-                    pool = audioPool = ThreadingConfig.newScheduler(1, identifier, "AudioLifeCycle");
-            }
-        }
-        return pool;
     }
 
     public boolean isShutdownRateLimitPool() {
         return shutdownRateLimitPool;
     }
 
-    public boolean isShutdownGatewayPool() {
-        return shutdownGatewayPool;
-    }
-
     public boolean isShutdownCallbackPool() {
         return shutdownCallbackPool;
-    }
-
-    public boolean isShutdownEventPool() {
-        return shutdownEventPool;
-    }
-
-    public boolean isShutdownAudioPool() {
-        return shutdownAudioPool;
     }
 }

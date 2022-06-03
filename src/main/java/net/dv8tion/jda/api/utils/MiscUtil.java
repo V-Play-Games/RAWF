@@ -18,6 +18,7 @@ package net.dv8tion.jda.api.utils;
 import gnu.trove.impl.sync.TSynchronizedLongObjectMap;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.Helpers;
 
@@ -27,14 +28,15 @@ import java.util.Formatter;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class MiscUtil {
     /**
-     * Generates a new thread-safe {@link gnu.trove.map.TLongObjectMap TLongObjectMap}
+     * Generates a new thread-safe {@link TLongObjectMap}
      *
      * @param <T> The Object type
-     * @return a new thread-safe {@link gnu.trove.map.TLongObjectMap TLongObjectMap}
+     * @return a new thread-safe {@link TLongObjectMap}
      */
     public static <T> TLongObjectMap<T> newLongMap() {
         return new TSynchronizedLongObjectMap<>(new TLongObjectHashMap<>(), new Object());
@@ -45,6 +47,14 @@ public class MiscUtil {
             return Long.parseLong(input);
         else
             return Long.parseUnsignedLong(input);
+    }
+
+    public static <T> Consumer<? super T> getRestActionSuccess(Consumer<? super T> success) {
+        return success != null ? success : RestAction.getDefaultSuccess();
+    }
+
+    public static <T> Consumer<? super Throwable> getRestActionFailure(Consumer<? super Throwable> failure) {
+        return failure != null ? failure : RestAction.getDefaultFailure();
     }
 
     public static long parseSnowflake(String input) {
@@ -65,6 +75,10 @@ public class MiscUtil {
             if (lock.isHeldByCurrentThread())
                 lock.unlock();
         }
+    }
+
+    public static <T> T requireNonNullElse(T obj, T other) {
+        return obj != null ? obj : other;
     }
 
     public static void locked(ReentrantLock lock, Runnable task) {
@@ -95,7 +109,7 @@ public class MiscUtil {
     /**
      * Can be used to append a String to a formatter.
      *
-     * @param formatter     The {@link java.util.Formatter Formatter}
+     * @param formatter     The {@link Formatter}
      * @param width         Minimum width to meet, filled with space if needed
      * @param precision     Maximum amount of characters to append
      * @param leftJustified Whether or not to left-justify the value

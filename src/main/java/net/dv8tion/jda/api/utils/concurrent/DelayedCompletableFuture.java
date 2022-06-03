@@ -16,6 +16,7 @@
 package net.dv8tion.jda.api.utils.concurrent;
 
 import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
@@ -27,6 +28,7 @@ import java.util.function.Function;
  * @see Delayed
  * @since 4.0.0
  */
+@ParametersAreNonnullByDefault
 public class DelayedCompletableFuture<T> extends CompletableFuture<T> implements ScheduledFuture<T> {
     private ScheduledFuture<?> future;
 
@@ -44,7 +46,7 @@ public class DelayedCompletableFuture<T> extends CompletableFuture<T> implements
      * @return DelayedCompletableFuture for the specified runnable
      */
     @Nonnull
-    public static <E> DelayedCompletableFuture<E> make(@Nonnull ScheduledExecutorService executor, long delay, @Nonnull TimeUnit unit, @Nonnull Function<? super DelayedCompletableFuture<E>, ? extends Runnable> mapping) {
+    public static <E> DelayedCompletableFuture<E> make(ScheduledExecutorService executor, long delay, TimeUnit unit, Function<? super DelayedCompletableFuture<E>, ? extends Runnable> mapping) {
         DelayedCompletableFuture<E> handle = new DelayedCompletableFuture<>();
         ScheduledFuture<?> future = executor.schedule(mapping.apply(handle), delay, unit);
         handle.initProxy(future);
@@ -75,12 +77,12 @@ public class DelayedCompletableFuture<T> extends CompletableFuture<T> implements
     }
 
     @Override
-    public long getDelay(@Nonnull TimeUnit unit) {
+    public long getDelay(TimeUnit unit) {
         return future.getDelay(unit);
     }
 
     @Override
-    public int compareTo(@Nonnull Delayed o) {
+    public int compareTo(Delayed o) {
         return future.compareTo(o);
     }
 }

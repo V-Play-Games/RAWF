@@ -74,8 +74,7 @@ public class UnifiedCacheViewImpl<T, E extends CacheView<T>> implements CacheVie
     @Nonnull
     @Override
     public ChainedClosableIterator<T> lockedIterator() {
-        Iterator<? extends E> gen = generator.get().iterator();
-        return new ChainedClosableIterator<>(gen);
+        return new ChainedClosableIterator<>(generator.get().iterator());
     }
 
     @Nonnull

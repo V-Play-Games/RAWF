@@ -26,7 +26,7 @@ import java.util.ServiceLoader;
 
 /**
  * This class serves as a LoggerFactory for JDA's internals.
- * <br>It will either return a Logger from a SLF4J implementation via {@link org.slf4j.LoggerFactory} if present,
+ * <br>It will either return a Logger from a SLF4J implementation via {@link LoggerFactory} if present,
  * or an instance of a custom {@link SimpleLogger} (From slf4j-simple).
  * <p>
  * It also has the utility method {@link #getLazyString(LazyEvaluation)} which is used to lazily construct Strings for Logging.
@@ -38,7 +38,7 @@ public class JDALogger {
      * <br>This variable is initialized during static class initialization.
      */
     public static final boolean SLF4J_ENABLED;
-    private static final Map<String, Logger> LOGS = new CaseInsensitiveMap<>();
+    private static final Map<String, Logger> LOGGERS = new CaseInsensitiveMap<>();
 
     static {
         boolean tmp;
@@ -72,7 +72,7 @@ public class JDALogger {
     }
 
     /**
-     * Will get the {@link org.slf4j.Logger} with the given log-name
+     * Will get the {@link Logger} with the given log-name
      * or create and cache a fallback logger if there is no SLF4J implementation present.
      * <p>
      * The fallback logger will be an instance of a slightly modified version of SLF4Js SimpleLogger.
@@ -81,15 +81,15 @@ public class JDALogger {
      * @return Logger with given log name
      */
     public static Logger getLog(String name) {
-        synchronized (LOGS) {
+        synchronized (LOGGERS) {
             if (SLF4J_ENABLED)
                 return LoggerFactory.getLogger(name);
-            return LOGS.computeIfAbsent(name, SimpleLogger::new);
+            return LOGGERS.computeIfAbsent(name, SimpleLogger::new);
         }
     }
 
     /**
-     * Will get the {@link org.slf4j.Logger} for the given Class
+     * Will get the {@link Logger} for the given Class
      * or create and cache a fallback logger if there is no SLF4J implementation present.
      * <p>
      * The fallback logger will be an instance of a slightly modified version of SLF4Js SimpleLogger.
@@ -98,10 +98,10 @@ public class JDALogger {
      * @return Logger for given Class
      */
     public static Logger getLog(Class<?> clazz) {
-        synchronized (LOGS) {
+        synchronized (LOGGERS) {
             if (SLF4J_ENABLED)
                 return LoggerFactory.getLogger(clazz);
-            return LOGS.computeIfAbsent(clazz.getName(), (n) -> new SimpleLogger(clazz.getSimpleName()));
+            return LOGGERS.computeIfAbsent(clazz.getName(), n -> new SimpleLogger(clazz.getSimpleName()));
         }
     }
 

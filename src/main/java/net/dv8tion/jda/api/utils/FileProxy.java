@@ -27,6 +27,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +43,7 @@ import java.util.function.Function;
 /**
  * A utility class to download files.
  */
+@ParametersAreNonnullByDefault
 public class FileProxy {
     private static volatile OkHttpClient defaultHttpClient;
 
@@ -54,7 +56,7 @@ public class FileProxy {
      * @param url The URL to download from
      * @throws IllegalArgumentException If the provided URL is null
      */
-    public FileProxy(@Nonnull String url) {
+    public FileProxy(String url) {
         Checks.notNull(url, "URL");
         this.url = url;
     }
@@ -66,7 +68,7 @@ public class FileProxy {
      * @param httpClient The default {@link OkHttpClient} to use while making HTTP requests
      * @throws IllegalArgumentException If the provided {@link OkHttpClient} is null
      */
-    public static void setDefaultHttpClient(@Nonnull OkHttpClient httpClient) {
+    public static void setDefaultHttpClient(OkHttpClient httpClient) {
         Checks.notNull(httpClient, "Default OkHttpClient");
         FileProxy.defaultHttpClient = httpClient;
     }
@@ -90,7 +92,7 @@ public class FileProxy {
      * @throws IllegalArgumentException If the provided {@link OkHttpClient} is null
      */
     @Nonnull
-    public FileProxy withClient(@Nonnull OkHttpClient customHttpClient) {
+    public FileProxy withClient(OkHttpClient customHttpClient) {
         Checks.notNull(customHttpClient, "Custom HTTP client");
         this.customHttpClient = customHttpClient;
         return this;
@@ -130,28 +132,27 @@ public class FileProxy {
         //    If we did not do this, CF#cancel would have only cancelled the *last* CompletableFuture, so the download would still have occurred for example
         // So since we return a completely different future, we need to use #complete / #completeExceptionally manually,
         //     i.e. When the underlying CompletableFuture (the actual download task) has completed in any state
-        final DownloadTask downloadTask = downloadInternal(url);
+        DownloadTask downloadTask = downloadInternal(url);
 
         return FutureUtil.thenApplyCancellable(downloadTask.getFuture(), Function.identity(), downloadTask::cancelCall);
     }
 
     private DownloadTask downloadInternal(String url) {
-        final CompletableFuture<InputStream> future = new CompletableFuture<>();
+        CompletableFuture<InputStream> future = new CompletableFuture<>();
 
-        final Request req = getRequest(url);
-        final OkHttpClient httpClient = getHttpClient();
-        final Call newCall = httpClient.newCall(req);
+        Request req = getRequest(url);
+        OkHttpClient httpClient = getHttpClient();
+        Call newCall = httpClient.newCall(req);
 
         newCall.enqueue(FunctionalCallback
             .onFailure((call, e) -> future.completeExceptionally(new UncheckedIOException(e)))
-            .onSuccess((call, response) ->
-            {
+            .onSuccess((call, response) -> {
                 if (response.isSuccessful()) {
                     InputStream body = IOUtil.getBody(response);
                     if (!future.complete(body))
                         IOUtil.silentClose(response);
                 } else {
-                    future.completeExceptionally(new HttpException(response.code() + ": " + response.message()));
+                    future.completeExceptionally(new HttpException(response.code() + ": " + response.message(), response.code()));
                     IOUtil.silentClose(response);
                 }
             }).build());
@@ -160,11 +161,11 @@ public class FileProxy {
     }
 
     protected CompletableFuture<Path> downloadToPath(String url) {
-        final HttpUrl parsedUrl = HttpUrl.parse(url);
+        HttpUrl parsedUrl = HttpUrl.parse(url);
         Checks.check(parsedUrl != null, "URL '" + url + "' is not valid");
 
-        final List<String> segments = parsedUrl.pathSegments();
-        final String fileName = segments.get(segments.size() - 1);
+        List<String> segments = parsedUrl.pathSegments();
+        String fileName = segments.get(segments.size() - 1);
 
         //Download to a file named the same as the last segment of the URL
         return downloadToPath(Paths.get(fileName));
@@ -174,13 +175,13 @@ public class FileProxy {
         //Check if the parent path, the folder, exists
         Checks.check(Files.notExists(path.getParent()), "Parent folder of the file '" + path.toAbsolutePath() + "' does not exist.");
 
-        final DownloadTask downloadTask = downloadInternal(url);
+        DownloadTask downloadTask = downloadInternal(url);
 
         return FutureUtil.thenApplyCancellable(downloadTask.getFuture(), stream -> {
             try {
                 //Temporary file follows this pattern: filename + random_number + ".part"
                 // The random number is generated until a filename becomes valid, until no file with the same name exists in the tmp directory
-                final Path tmpPath = Files.createTempFile(path.getFileName().toString(), ".part");
+                Path tmpPath = Files.createTempFile(path.getFileName().toString(), ".part");
                 //A user might use a file's presence as an indicator of something being successfully downloaded,
                 //This might prevent a file from being partial, say, if the user shuts down its bot while it's downloading something
                 //Meanwhile, the time window to "corrupt" a file is very small when moving it
@@ -236,10 +237,10 @@ public class FileProxy {
      *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<File> downloadToFile(@Nonnull File file) {
+    public CompletableFuture<File> downloadToFile(File file) {
         Checks.notNull(file, "File");
 
-        final CompletableFuture<Path> downloadToPathFuture = downloadToPath(url, file.toPath());
+        CompletableFuture<Path> downloadToPathFuture = downloadToPath(url, file.toPath());
         return FutureUtil.thenApplyCancellable(downloadToPathFuture, Path::toFile);
     }
 
@@ -259,7 +260,7 @@ public class FileProxy {
      *                                  </ul>
      */
     @Nonnull
-    public CompletableFuture<Path> downloadToPath(@Nonnull Path path) {
+    public CompletableFuture<Path> downloadToPath(Path path) {
         Checks.notNull(path, "Path");
 
         return downloadToPath(url, path);

@@ -153,8 +153,7 @@ public abstract class AbstractCacheView<T> extends ReadWriteLockCache<T> impleme
         if (isEmpty())
             return Collections.emptyList();
         List<T> list = new ArrayList<>();
-        forEach(elem ->
-        {
+        forEach(elem -> {
             String elementName = nameMapper.apply(elem);
             if (elementName != null && equals(ignoreCase, elementName, name))
                 list.add(elem);

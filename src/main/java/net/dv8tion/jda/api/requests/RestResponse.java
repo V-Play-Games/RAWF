@@ -20,15 +20,18 @@ import net.dv8tion.jda.api.utils.IOFunction;
 import net.dv8tion.jda.api.utils.data.DataArray;
 import net.dv8tion.jda.api.utils.data.DataObject;
 import net.dv8tion.jda.internal.utils.IOUtil;
+import okhttp3.Response;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.*;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class Response implements Closeable {
+@ParametersAreNonnullByDefault
+public class RestResponse implements Closeable {
     public static final int ERROR_CODE = -1;
     public static final String ERROR_MESSAGE = "ERROR";
     public static final IOFunction<BufferedReader, DataObject> JSON_SERIALIZE_OBJECT = DataObject::fromJson;
@@ -38,19 +41,19 @@ public class Response implements Closeable {
     public final String message;
     public final long retryAfter;
     private final InputStream body;
-    private final okhttp3.Response rawResponse;
+    private final Response rawResponse;
     private final Set<String> cfRays;
     private String fallbackString;
     private Object object;
     private boolean attemptedParsing = false;
     private Exception exception;
 
-    public Response(@Nonnull final Exception exception, @Nonnull final Set<String> cfRays) {
+    public RestResponse(Exception exception, Set<String> cfRays) {
         this(null, ERROR_CODE, ERROR_MESSAGE, -1, cfRays);
         this.exception = exception;
     }
 
-    public Response(@Nullable final okhttp3.Response response, final int code, @Nonnull final String message, final long retryAfter, @Nonnull final Set<String> cfRays) {
+    public RestResponse(@Nullable Response response, int code, String message, long retryAfter, Set<String> cfRays) {
         this.rawResponse = response;
         this.code = code;
         this.message = message;
@@ -68,11 +71,11 @@ public class Response implements Closeable {
             }
     }
 
-    public Response(final long retryAfter, @Nonnull final Set<String> cfRays) {
+    public RestResponse(long retryAfter, Set<String> cfRays) {
         this(null, 429, "TOO MANY REQUESTS", retryAfter, cfRays);
     }
 
-    public Response(@Nonnull final okhttp3.Response response, final long retryAfter, @Nonnull final Set<String> cfRays) {
+    public RestResponse(Response response, long retryAfter, Set<String> cfRays) {
         this(response, response.code(), response.message(), retryAfter, cfRays);
     }
 
@@ -108,7 +111,7 @@ public class Response implements Closeable {
     }
 
     @Nullable
-    public okhttp3.Response getRawResponse() {
+    public Response getRawResponse() {
         return this.rawResponse;
     }
 
@@ -123,7 +126,7 @@ public class Response implements Closeable {
     }
 
     public boolean isError() {
-        return this.code == Response.ERROR_CODE;
+        return this.code == RestResponse.ERROR_CODE;
     }
 
     public boolean isOk() {
@@ -174,7 +177,7 @@ public class Response implements Closeable {
             T t = parser.apply(reader);
             this.object = t;
             return Optional.ofNullable(t);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             try {
                 reader.reset();
                 this.fallbackString = readString(reader);
