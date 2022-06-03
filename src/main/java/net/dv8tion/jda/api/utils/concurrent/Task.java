@@ -71,7 +71,7 @@ public interface Task<T> {
     T get();
 
     /**
-     * Cancels the task and will emit a {@link java.util.concurrent.CancellationException CancellationException}.
+     * Cancels the task and will emit a {@link java.util.concurrent.CancellationException}.
      */
     void cancel();
 }

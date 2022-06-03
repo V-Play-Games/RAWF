@@ -233,7 +233,7 @@ public interface CacheView<T> extends Iterable<T> {
     }
 
     /**
-     * Creates a {@link Stream Stream} of all cached elements.
+     * Creates a {@link Stream} of all cached elements.
      *
      * @return Stream of elements
      */
@@ -241,7 +241,7 @@ public interface CacheView<T> extends Iterable<T> {
     Stream<T> stream();
 
     /**
-     * Creates a parallel {@link Stream Stream} of all cached elements.
+     * Creates a parallel {@link Stream} of all cached elements.
      *
      * @return Parallel Stream of elements
      */
@@ -250,7 +250,7 @@ public interface CacheView<T> extends Iterable<T> {
 
     /**
      * Collects all cached entities into a single Collection using the provided
-     * {@link Collector Collector}.
+     * {@link Collector}.
      * Shortcut for {@code stream().collect(collector)}.
      *
      * @param collector The collector used to collect the elements
@@ -306,7 +306,7 @@ public interface CacheView<T> extends Iterable<T> {
 
     /**
      * Basic implementation of {@link CacheView} interface.
-     * <br>Using {@link gnu.trove.map.TLongObjectMap TLongObjectMap} to cache entities!
+     * <br>Using {@link gnu.trove.map.TLongObjectMap} to cache entities!
      *
      * @param <T> The type this should cache
      */

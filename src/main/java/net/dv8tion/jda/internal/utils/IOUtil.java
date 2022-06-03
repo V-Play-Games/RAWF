@@ -115,10 +115,10 @@ public class IOUtil {
     }
 
     /**
-     * Creates a new request body that transmits the provided {@link InputStream InputStream}.
+     * Creates a new request body that transmits the provided {@link InputStream}.
      *
-     * @param contentType The {@link MediaType MediaType} of the data
-     * @param stream      The {@link InputStream InputStream} to be transmitted
+     * @param contentType The {@link MediaType} of the data
+     * @param stream      The {@link InputStream} to be transmitted
      * @return RequestBody capable of transmitting the provided InputStream of data
      */
     public static RequestBody createRequestBody(MediaType contentType, InputStream stream) {
@@ -155,9 +155,9 @@ public class IOUtil {
     }
 
     /**
-     * Retrieves an {@link InputStream InputStream} for the provided {@link Response Response}.
+     * Retrieves an {@link InputStream} for the provided {@link Response}.
      * <br>When the header for {@code content-encoding} is set with {@code gzip} this will wrap the body
-     * in a {@link GZIPInputStream GZIPInputStream} which decodes the data.
+     * in a {@link GZIPInputStream} which decodes the data.
      *
      * <p>This is used to make usage of encoded responses more user-friendly in various parts of JDA.
      *

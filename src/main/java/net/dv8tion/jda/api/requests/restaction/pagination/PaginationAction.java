@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * {@link RestAction RestAction} specification used
+ * {@link RestAction} specification used
  * to retrieve entities for paginated endpoints (before, after, limit).
  * <br>Note that this implementation is not considered thread-safe as modifications to the cache are not done
  * with a lock. Calling methods on this class from multiple threads is not recommended.
@@ -153,13 +153,13 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
 
     /**
      * The currently cached entities of recent execution tasks.
-     * <br>Every {@link RestAction RestAction} success
-     * adds to this List. (Thread-Safe due to {@link java.util.concurrent.CopyOnWriteArrayList CopyOnWriteArrayList})
+     * <br>Every {@link RestAction} success
+     * adds to this List. (Thread-Safe due to {@link java.util.concurrent.CopyOnWriteArrayList})
      *
      * <p><b>This <u>does not</u> contain all entities for the paginated endpoint unless the pagination has reached an end!</b>
      * <br>It only contains those entities which already have been retrieved.
      *
-     * @return Immutable {@link List List} containing all currently cached entities for this PaginationAction
+     * @return Immutable {@link List} containing all currently cached entities for this PaginationAction
      */
     @Nonnull
     List<T> getCached();
@@ -220,7 +220,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
     /**
      * Whether retrieved entities are stored within an
      * internal cache. If this is {@code false} entities
-     * retrieved by the iterator or a call to a {@link RestAction RestAction}
+     * retrieved by the iterator or a call to a {@link RestAction}
      * terminal operation will not be retrievable from {@link #getCached()}.
      * <br>This being disabled allows unused entities to be removed from
      * the memory heap by the garbage collector. If this is enabled this will not
@@ -266,7 +266,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * @param rule The rule which must be fulfilled for an element to be added,
      *             returns false to discard the element and finish the task
-     * @return {@link CompletableFuture} - Type: {@link List List}
+     * @return {@link CompletableFuture} - Type: {@link List}
      * <br>Future representing the fetch task, the list will be sorted most recent to oldest
      * @throws IllegalArgumentException If the provided rule is {@code null}
      * @see #takeWhileAsync(int, Predicate)
@@ -284,7 +284,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @param limit The maximum amount of elements to collect or {@code 0} for no limit
      * @param rule  The rule which must be fulfilled for an element to be added,
      *              returns false to discard the element and finish the task
-     * @return {@link CompletableFuture} - Type: {@link List List}
+     * @return {@link CompletableFuture} - Type: {@link List}
      * <br>Future representing the fetch task, the list will be sorted most recent to oldest
      * @throws IllegalArgumentException If the provided rule is {@code null} or the limit is negative
      * @see #takeWhileAsync(Predicate)
@@ -301,7 +301,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * @param rule The rule which must be fulfilled for an element to be discarded,
      *             returns true to discard the element and finish the task
-     * @return {@link CompletableFuture} - Type: {@link List List}
+     * @return {@link CompletableFuture} - Type: {@link List}
      * <br>Future representing the fetch task, the list will be sorted most recent to oldest
      * @throws IllegalArgumentException If the provided rule is {@code null}
      * @see #takeWhileAsync(Predicate)
@@ -318,7 +318,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * @param limit The maximum amount of elements to collect or {@code 0} for no limit
      * @param rule  The rule which must be fulfilled for an element to be discarded,
      *              returns true to discard the element and finish the task
-     * @return {@link CompletableFuture} - Type: {@link List List}
+     * @return {@link CompletableFuture} - Type: {@link List}
      * <br>Future representing the fetch task, the list will be sorted most recent to oldest
      * @throws IllegalArgumentException If the provided rule is {@code null} or the limit is negative
      * @see #takeWhileAsync(Predicate)
@@ -350,7 +350,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <br>This also includes already cached entities similar to {@link #forEachAsync(Procedure)}.
      *
      * @param amount The maximum amount to retrieve
-     * @return {@link CompletableFuture CompletableFuture} - Type: {@link List List}
+     * @return {@link CompletableFuture} - Type: {@link List}
      * @see #forEachAsync(Procedure)
      */
     @Nonnull
@@ -361,7 +361,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <br>Unlike {@link #takeAsync(int)} this does not include already cached entities.
      *
      * @param amount The maximum amount to retrieve
-     * @return {@link CompletableFuture CompletableFuture} - Type: {@link List List}
+     * @return {@link CompletableFuture} - Type: {@link List}
      * @see #forEachRemainingAsync(Procedure)
      */
     @Nonnull
@@ -393,8 +393,8 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * }
      * }</pre>
      *
-     * @param action {@link Procedure Procedure} returning {@code true} if iteration should continue!
-     * @return {@link java.util.concurrent.Future Future} that can be cancelled to stop iteration from outside!
+     * @param action {@link Procedure} returning {@code true} if iteration should continue!
+     * @return {@link java.util.concurrent.Future} that can be cancelled to stop iteration from outside!
      * @throws IllegalArgumentException If the provided Procedure is {@code null}
      */
     @Nonnull
@@ -429,9 +429,9 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * }
      * }</pre>
      *
-     * @param action  {@link Procedure Procedure} returning {@code true} if iteration should continue!
-     * @param failure {@link Consumer Consumer} that should handle any throwables from the action
-     * @return {@link java.util.concurrent.Future Future} that can be cancelled to stop iteration from outside!
+     * @param action  {@link Procedure} returning {@code true} if iteration should continue!
+     * @param failure {@link Consumer} that should handle any throwables from the action
+     * @return {@link java.util.concurrent.Future} that can be cancelled to stop iteration from outside!
      * @throws IllegalArgumentException If the provided Procedure or the failure Consumer is {@code null}
      */
     @Nonnull
@@ -464,8 +464,8 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * }
      * }</pre>
      *
-     * @param action {@link Procedure Procedure} returning {@code true} if iteration should continue!
-     * @return {@link java.util.concurrent.Future Future} that can be cancelled to stop iteration from outside!
+     * @param action {@link Procedure} returning {@code true} if iteration should continue!
+     * @return {@link java.util.concurrent.Future} that can be cancelled to stop iteration from outside!
      * @throws IllegalArgumentException If the provided Procedure is {@code null}
      */
     @Nonnull
@@ -500,9 +500,9 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * }
      * }</pre>
      *
-     * @param action  {@link Procedure Procedure} returning {@code true} if iteration should continue!
-     * @param failure {@link Consumer Consumer} that should handle any throwables from the action
-     * @return {@link java.util.concurrent.Future Future} that can be cancelled to stop iteration from outside!
+     * @param action  {@link Procedure} returning {@code true} if iteration should continue!
+     * @param failure {@link Consumer} that should handle any throwables from the action
+     * @return {@link java.util.concurrent.Future} that can be cancelled to stop iteration from outside!
      * @throws IllegalArgumentException If the provided Procedure or the failure Consumer is {@code null}
      */
     @Nonnull
@@ -514,7 +514,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * <p><b>This is a blocking operation that might take a while to complete</b>
      *
-     * @param action The {@link Procedure Procedure}
+     * @param action The {@link Procedure}
      *               which should return {@code true} to continue iterating
      */
     void forEachRemaining(Procedure<? super T> action);
@@ -525,7 +525,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
     }
 
     /**
-     * A sequential {@link Stream Stream} with this PaginationAction as its source.
+     * A sequential {@link Stream} with this PaginationAction as its source.
      *
      * @return a sequential {@code Stream} over the elements in this PaginationAction
      */
@@ -535,7 +535,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
     }
 
     /**
-     * Returns a possibly parallel {@link Stream Stream} with this PaginationAction as its
+     * Returns a possibly parallel {@link Stream} with this PaginationAction as its
      * source. It is allowable for this method to return a sequential stream.
      *
      * @return a sequential {@code Stream} over the elements in this PaginationAction
@@ -546,7 +546,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
     }
 
     /**
-     * {@link PaginationIterator PaginationIterator}
+     * {@link PaginationIterator}
      * that will iterate over all entities for this PaginationAction.
      *
      * @return new PaginationIterator
@@ -556,7 +556,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
     PaginationIterator<T> iterator();
 
     /**
-     * Iterator implementation for a {@link PaginationAction PaginationAction}.
+     * Iterator implementation for a {@link PaginationAction}.
      * <br>This iterator will first iterate over all currently cached entities and continue to retrieve new entities
      * as needed.
      *
