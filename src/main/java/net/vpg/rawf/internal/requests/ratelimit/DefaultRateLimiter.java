@@ -99,7 +99,7 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
     }
 
     private ScheduledExecutorService getScheduler() {
-        return /*requester.getJDA().getRateLimitPool()*/null;
+        return requester.getJDA().getRateLimitPool();
     }
 
     @Override
@@ -317,10 +317,9 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
         return input == null ? 0L : (long) (Double.parseDouble(input) * 1000);
     }
 
-    @SuppressWarnings("rawtypes")
     private class Bucket implements IBucket, Runnable {
         private final String bucketId;
-        private final Deque<RestRequest> requests = new ConcurrentLinkedDeque<>();
+        private final Deque<RestRequest<?>> requests = new ConcurrentLinkedDeque<>();
 
         private long reset = 0;
         private int remaining = 1;
@@ -330,11 +329,11 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
             this.bucketId = bucketId;
         }
 
-        public void enqueue(RestRequest request) {
+        public void enqueue(RestRequest<?> request) {
             requests.addLast(request);
         }
 
-        public void retry(RestRequest request) {
+        public void retry(RestRequest<?> request) {
             requests.addFirst(request);
         }
 
@@ -383,8 +382,6 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
                     schedule();
                 else if (shutdown)
                     buckets.remove(bucketId);
-//                if (isStopped && buckets.isEmpty())
-//                    requester.getJDA().shutdownRequester();
             });
         }
 
@@ -393,8 +390,8 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
                 return;
             // Schedule a new bucket worker if no worker is running
             bucketLocked(() ->
-                rateLimitQueue.computeIfAbsent(this, k ->
-                    getScheduler().schedule(this, getRateLimit(), TimeUnit.MILLISECONDS)
+                rateLimitQueue.computeIfAbsent(this,
+                    k -> getScheduler().schedule(this, getRateLimit(), TimeUnit.MILLISECONDS)
                 )
             );
         }
@@ -406,7 +403,7 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
                 long rateLimit = getRateLimit();
                 if (rateLimit > 0L) {
                     // We need to backoff since we ran out of remaining uses or hit the global rate limit
-                    RestRequest request = requests.peekFirst(); // this *should* not be null
+                    RestRequest<?> request = requests.peekFirst(); // this *should* not be null
                     String baseRoute = request != null ? request.getRoute().getBaseRoute().toString() : "N/A";
                     if (!isGlobalRateLimit() && rateLimit >= 1000 * 60 * 30) // 30 minutes
                         LOGGER.warn("Encountered long {} minutes Rate-Limit on route {}", TimeUnit.MILLISECONDS.toMinutes(rateLimit), baseRoute);
@@ -414,7 +411,7 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
                     break;
                 }
 
-                RestRequest request = requests.removeFirst();
+                RestRequest<?> request = requests.removeFirst();
                 if (request.isSkipped())
                     continue;
                 if (isUnlimited()) {
@@ -448,7 +445,7 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
         }
 
         @Override
-        public Queue<RestRequest> getRequests() {
+        public Queue<RestRequest<?>> getRequests() {
             return requests;
         }
 

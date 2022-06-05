@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 /**
- * Root package of the Java Discord API library.
+ * Root package of the Rest API Wrapper Framework library.
  *
  * <p>From here you can navigate to the library features.
  * <ul>
  *     <li>{@link net.vpg.rawf.api API Features}
- *     <br>Package which includes the core features of JDA, available throughout all feature packages</li>
+ *     <br>Package which includes the core features of RAWF, available throughout all feature packages</li>
  *
  *     <li>{@link net.vpg.rawf.annotations Annotations}
  *     <br>Annotations used for documentation purposes</li>

@@ -15,6 +15,7 @@
  */
 package net.vpg.rawf.internal.requests.restaction.operator;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.exceptions.ContextException;
 import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.api.utils.MiscUtil;
@@ -55,12 +56,12 @@ public abstract class RestActionOperator<I, O> implements RestAction<O> {
         }, catcher);
     }
 
-//    @Nonnull
-//    @Override
-//    public JDA getJDA()
-//    {
-//        return action.getJDA();
-//    }
+    @Nonnull
+    @Override
+    public RestApi getJDA()
+    {
+        return action.getJDA();
+    }
 
     @Nonnull
     @Override

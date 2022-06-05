@@ -15,8 +15,11 @@
  */
 package net.vpg.rawf.api.requests;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.exceptions.ContextException;
+import net.vpg.rawf.api.exceptions.ErrorResponseException;
 import net.vpg.rawf.api.exceptions.RateLimitedException;
+import net.vpg.rawf.internal.requests.CallbackContext;
 import net.vpg.rawf.internal.requests.RestActionImpl;
 import net.vpg.rawf.internal.requests.Route;
 import okhttp3.RequestBody;
@@ -24,6 +27,7 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
@@ -41,8 +45,7 @@ public class RestRequest<T> {
     private final CaseInsensitiveMap<String, String> headers;
     private final long deadline;
     private final boolean priority;
-
-//    private final String localReason;
+    private final RestApi api;
 
     private boolean done = false;
     private boolean isCancelled = false;
@@ -63,14 +66,14 @@ public class RestRequest<T> {
         this.route = route;
         this.headers = headers;
 
-//        this.api = (JDAImpl) restAction.getJDA();
+        this.api = restAction.getJDA();
     }
 
     public void onSuccess(T successObj) {
         if (done)
             return;
         done = true;
-        /*api.getCallbackPool().execute(() ->
+        api.getCallbackPool().execute(() ->
         {
             try (CallbackContext ___ = CallbackContext.getInstance())
             {
@@ -85,7 +88,7 @@ public class RestRequest<T> {
                     throw (Error) t;
                 }
             }
-        });*/
+        });
     }
 
     public void onFailure(RestResponse response) {
@@ -101,13 +104,11 @@ public class RestRequest<T> {
         if (done)
             return;
         done = true;
-        /*api.getCallbackPool().execute(() ->
+        api.getCallbackPool().execute(() ->
         {
             try (CallbackContext ___ = CallbackContext.getInstance())
             {
                 onFailure.accept(failException);
-//                if (failException instanceof Error)
-//                    api.handleEvent(new ExceptionEvent(api, failException, false));
             }
             catch (Throwable t)
             {
@@ -118,7 +119,7 @@ public class RestRequest<T> {
                     throw (Error) t;
                 }
             }
-        });*/
+        });
     }
 
     public void onCancelled() {
@@ -173,7 +174,7 @@ public class RestRequest<T> {
     }
 
     @Nullable
-    public CaseInsensitiveMap<String, String> getHeaders() {
+    public Map<String, String> getHeaders() {
         return headers;
     }
 

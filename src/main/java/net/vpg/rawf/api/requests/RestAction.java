@@ -15,6 +15,7 @@
  */
 package net.vpg.rawf.api.requests;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.exceptions.ContextException;
 import net.vpg.rawf.api.utils.Result;
 import net.vpg.rawf.api.utils.concurrent.DelayedCompletableFuture;
@@ -331,13 +332,13 @@ public interface RestAction<T> {
         return result.map(output);
     }
 
-//    /**
-//     * The current JDA instance
-//     *
-//     * @return The corresponding JDA instance
-//     */
-//    @Nonnull
-//    JDA getJDA();
+    /**
+     * The current JDA instance
+     *
+     * @return The corresponding JDA instance
+     */
+    @Nonnull
+    RestApi getJDA();
 
     /**
      * The current checks for this RestAction.

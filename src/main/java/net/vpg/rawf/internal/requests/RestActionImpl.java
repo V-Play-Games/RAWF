@@ -15,6 +15,7 @@
  */
 package net.vpg.rawf.internal.requests;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.exceptions.ErrorResponseException;
 import net.vpg.rawf.api.exceptions.RateLimitedException;
 import net.vpg.rawf.api.requests.RestAction;
@@ -53,7 +54,7 @@ public class RestActionImpl<T> implements RestAction<T> {
             LOG.error("RestAction queue returned failure: [{}] {}", t.getClass().getSimpleName(), t.getMessage());
     };
 
-    //    protected final JDAImpl api;
+    protected final RestApi api;
     private final Route.CompiledRoute route;
     private final RequestBody data;
     private final BiFunction<RestResponse, RestRequest<T>, T> handler;
@@ -63,31 +64,30 @@ public class RestActionImpl<T> implements RestAction<T> {
     private Object rawData;
     private BooleanSupplier checks;
 
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route) {
-        this(route, (RequestBody) null, null);
+    public RestActionImpl(RestApi api, Route.CompiledRoute route) {
+        this(api, route, (RequestBody) null, null);
     }
 
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, DataObject data) {
-        this(route, data, null);
+    public RestActionImpl(RestApi api, Route.CompiledRoute route, DataObject data) {
+        this(api, route, data, null);
     }
 
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, RequestBody data) {
-        this(route, data, null);
+    public RestActionImpl(RestApi api, Route.CompiledRoute route, RequestBody data) {
+        this(api, route, data, null);
     }
 
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, BiFunction<RestResponse, RestRequest<T>, T> handler) {
-        this(route, (RequestBody) null, handler);
+    public RestActionImpl(RestApi api, Route.CompiledRoute route, BiFunction<RestResponse, RestRequest<T>, T> handler) {
+        this(api, route, (RequestBody) null, handler);
     }
 
-    //    @SuppressWarnings("deprecation")
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, DataObject data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
-        this(route, data == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, data.toJson()), handler);
+    public RestActionImpl(RestApi api, Route.CompiledRoute route, DataObject data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
+        this(api, route, data == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, data.toJson()), handler);
         this.rawData = data;
     }
 
-    public RestActionImpl(/*JDA api,*/ Route.CompiledRoute route, RequestBody data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
-//        Checks.notNull(api, "api");
-//        this.api = (JDAImpl) api;
+    public RestActionImpl(RestApi api, Route.CompiledRoute route, RequestBody data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
+        Checks.notNull(api, "api");
+        this.api = api;
         this.route = route;
         this.data = data;
         this.handler = handler;
@@ -132,12 +132,11 @@ public class RestActionImpl<T> implements RestAction<T> {
         return this;
     }
 
-//    @Nonnull
-//    @Override
-//    public JDA getJDA()
-//    {
-//        return api;
-//    }
+    @Nonnull
+    @Override
+    public RestApi getJDA() {
+        return api;
+    }
 
     @Nonnull
     @Override
@@ -170,7 +169,7 @@ public class RestActionImpl<T> implements RestAction<T> {
             success = DEFAULT_SUCCESS;
         if (failure == null)
             failure = DEFAULT_FAILURE;
-//        api.getRequester().request(new Request<>(this, success, failure, finisher, true, data, rawData, getDeadline(), priority, route, headers));
+        api.getRequester().request(new RestRequest<>(this, success, failure, finisher, true, data, rawData, getDeadline(), priority, route, headers));
     }
 
     @Nonnull

@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 public class RestResponse implements Closeable {
     public static final int ERROR_CODE = -1;
     public static final String ERROR_MESSAGE = "ERROR";
-    public static final IOFunction<BufferedReader, DataObject> JSON_SERIALIZE_OBJECT = DataObject::fromJson;
-    public static final IOFunction<BufferedReader, DataArray> JSON_SERIALIZE_ARRAY = DataArray::fromJson;
 
     public final int code;
     public final String message;
@@ -63,12 +61,13 @@ public class RestResponse implements Closeable {
 
         if (response == null) {
             this.body = null;
-        } else // weird compatibility issue, thinks some final isn't initialized if we return pre-maturely
+        } else {
             try {
                 this.body = IOUtil.getBody(response);
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 throw new IllegalStateException("An error occurred while parsing the response for a RestAction", e);
             }
+        }
     }
 
     public RestResponse(long retryAfter, Set<String> cfRays) {
@@ -81,28 +80,27 @@ public class RestResponse implements Closeable {
 
     @Nonnull
     public DataArray getArray() {
-        return get(DataArray.class, JSON_SERIALIZE_ARRAY);
+        return get(DataArray.class, DataArray::fromJson);
     }
 
     @Nonnull
     public Optional<DataArray> optArray() {
-        return parseBody(true, DataArray.class, JSON_SERIALIZE_ARRAY);
+        return parseBody(true, DataArray.class, DataArray::fromJson);
     }
 
     @Nonnull
     public DataObject getObject() {
-        return get(DataObject.class, JSON_SERIALIZE_OBJECT);
+        return get(DataObject.class, DataObject::fromJson);
     }
 
     @Nonnull
     public Optional<DataObject> optObject() {
-        return parseBody(true, DataObject.class, JSON_SERIALIZE_OBJECT);
+        return parseBody(true, DataObject.class, DataObject::fromJson);
     }
 
     @Nonnull
     public String getString() {
-        return parseBody(String.class, this::readString)
-            .orElseGet(() -> fallbackString == null ? "N/A" : fallbackString);
+        return parseBody(String.class, this::readString).orElseGet(() -> fallbackString == null ? "N/A" : fallbackString);
     }
 
     @Nonnull
@@ -126,15 +124,15 @@ public class RestResponse implements Closeable {
     }
 
     public boolean isError() {
-        return this.code == RestResponse.ERROR_CODE;
+        return code == RestResponse.ERROR_CODE;
     }
 
     public boolean isOk() {
-        return this.code > 199 && this.code < 300;
+        return 199 < code && code < 300;
     }
 
     public boolean isRateLimit() {
-        return this.code == 429;
+        return code == 429;
     }
 
     @Override

@@ -10,6 +10,12 @@
   </parent>
   <artifactId>RAWF</artifactId>
   <version>0.0.1</version>
+  <url>http://github.com/V-Play-Games/RAWF</url>
+  <scm>
+    <connection>scm:git:git://github.com/V-Play-Games/RAWF.git</connection>
+    <developerConnection>scm:git:ssh://github.com:V-Play-Games/RAWF.git</developerConnection>
+    <url>https://github.com/V-Play-Games/RAWF</url>
+  </scm>
   <dependencies>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>

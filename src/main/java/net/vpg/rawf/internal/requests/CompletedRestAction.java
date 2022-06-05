@@ -15,6 +15,7 @@
  */
 package net.vpg.rawf.internal.requests;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.api.utils.MiscUtil;
 
@@ -26,30 +27,30 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class CompletedRestAction<T> implements RestAction<T> {
-    //    private final JDA api;
+    private final RestApi api;
     private final T value;
     private final Throwable error;
 
-    public CompletedRestAction(/*JDA api,*/ T value, Throwable error) {
-//        this.api = api;
+    public CompletedRestAction(RestApi api, T value, Throwable error) {
+        this.api = api;
         this.value = value;
         this.error = error;
     }
 
-    public CompletedRestAction(/*JDA api,*/ T value) {
-        this(value, null);
+    public CompletedRestAction(RestApi api, T value) {
+        this(api, value, null);
     }
 
-    public CompletedRestAction(/*JDA api,*/ Throwable error) {
-        this(null, error);
+    public CompletedRestAction(RestApi api, Throwable error) {
+        this(api, null, error);
     }
 
-//    @Nonnull
-//    @Override
-//    public JDA getJDA()
-//    {
-//        return api;
-//    }
+    @Nonnull
+    @Override
+    public RestApi getJDA()
+    {
+        return api;
+    }
 
     @Nonnull
     @Override

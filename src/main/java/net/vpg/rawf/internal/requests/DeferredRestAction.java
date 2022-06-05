@@ -15,6 +15,7 @@
  */
 package net.vpg.rawf.internal.requests;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.api.utils.MiscUtil;
 import net.vpg.rawf.internal.utils.Checks;
@@ -28,7 +29,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DeferredRestAction<T, R extends RestAction<T>> implements RestAction<T> {
-    //    private final JDA api;
+    private final RestApi api;
     private final Class<T> type;
     private final Supplier<T> valueSupplier;
     private final Supplier<R> actionSupplier;
@@ -38,25 +39,25 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
     private BooleanSupplier isAction;
     private BooleanSupplier transitiveChecks;
 
-    public DeferredRestAction(/*JDA api,*/ Supplier<R> actionSupplier) {
-        this(null, null, actionSupplier);
+    public DeferredRestAction(RestApi api, Supplier<R> actionSupplier) {
+        this(api, null, null, actionSupplier);
     }
 
-    public DeferredRestAction(/*JDA api,*/ Class<T> type,
-                                           Supplier<T> valueSupplier,
-                                           Supplier<R> actionSupplier) {
-//        this.api = api;
+    public DeferredRestAction(RestApi api,
+                              Class<T> type,
+                              Supplier<T> valueSupplier,
+                              Supplier<R> actionSupplier) {
+        this.api = api;
         this.type = type;
         this.valueSupplier = valueSupplier;
         this.actionSupplier = actionSupplier;
     }
 
-//    @Nonnull
-//    @Override
-//    public JDA getJDA()
-//    {
-//        return api;
-//    }
+    @Nonnull
+    @Override
+    public RestApi getJDA() {
+        return api;
+    }
 
     @Nonnull
     @Override

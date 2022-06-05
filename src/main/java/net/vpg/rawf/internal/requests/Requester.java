@@ -15,6 +15,7 @@
  */
 package net.vpg.rawf.internal.requests;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.requests.RateLimiter;
 import net.vpg.rawf.api.requests.RestRequest;
 import net.vpg.rawf.api.requests.RestResponse;
@@ -26,7 +27,6 @@ import net.vpg.rawf.internal.utils.config.AuthorizationConfig;
 import okhttp3.*;
 import okhttp3.internal.http.HttpMethod;
 import org.slf4j.Logger;
-import org.slf4j.MDC;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
@@ -35,9 +35,8 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 
 public class Requester {
@@ -48,25 +47,22 @@ public class Requester {
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     public static final MediaType MEDIA_TYPE_OCTET = MediaType.parse("application/octet-stream; charset=utf-8");
 
-    //    protected final JDAImpl api;
+    protected final RestApi api;
     protected final AuthorizationConfig authConfig;
     private final RateLimiter rateLimiter;
 
     private final OkHttpClient httpClient;
-    private final ConcurrentMap<String, String> contextMap = null;
-    //when we actually set the shard info we can also set the mdc context map, before it makes no sense
-    private boolean isContextReady = false;
     private volatile boolean retryOnTimeout = false;
 
-    public Requester(/*JDA api*/) {
-        this(null);
+    public Requester(RestApi api) {
+        this(api, null);
     }
 
-    public Requester(/*JDA api,*/ AuthorizationConfig authConfig) {
+    public Requester(RestApi api, AuthorizationConfig authConfig) {
         Checks.notNull(authConfig, "Authorization Config");
 
         this.authConfig = authConfig;
-//        this.api = (JDAImpl) api;
+        this.api = api;
         this.rateLimiter = new DefaultRateLimiter(this);
         this.httpClient = /*this.api.getHttpClient()*/null;
     }
@@ -77,21 +73,8 @@ public class Requester {
             || e instanceof SSLPeerUnverifiedException; // SSL Certificate was wrong
     }
 
-    public void setContextReady(boolean ready) {
-        this.isContextReady = ready;
-    }
-
-//    public JDAImpl getJDA()
-//    {
-//        return api;
-//    }
-
-    public void setContext() {
-        if (!isContextReady)
-            return;
-//        if (contextMap == null)
-//            contextMap = api.getContextMap();
-        contextMap.forEach(MDC::put);
+    public RestApi getJDA() {
+        return api;
     }
 
     public <T> void request(RestRequest<T> apiRequest) {
@@ -141,21 +124,21 @@ public class Requester {
         if (body == null && HttpMethod.requiresRequestBody(method))
             body = EMPTY_BODY;
 
-        builder.method(method, body)
-            .header("X-RateLimit-Precision", "millisecond")
-            .header("user-agent", USER_AGENT)
-            .header("accept-encoding", "gzip");
+        builder.method(method, body);
+        builder.header("user-agent", USER_AGENT)
+            .header("accept-encoding", "gzip")
+            .header("x-ratelimit-precision", "millisecond"); // still sending this in case of regressions
 
         //adding token to all requests to the discord api or cdn pages
         //we can check for startsWith(DISCORD_API_PREFIX) because the cdn endpoints don't need any kind of authorization
-//        if (url.startsWith(DISCORD_API_PREFIX))
-//            builder.header("authorization", api.getToken());
+        if (url.startsWith(DISCORD_API_PREFIX))
+            builder.header("authorization", authConfig.getToken());
 
         // Apply custom headers like X-Audit-Log-Reason
         // If customHeaders is null this does nothing
-        if (apiRequest.getHeaders() != null) {
-            for (Entry<String, String> header : apiRequest.getHeaders().entrySet())
-                builder.addHeader(header.getKey(), header.getValue());
+        Map<String, String> headers = apiRequest.getHeaders();
+        if (headers != null) {
+            headers.forEach(builder::addHeader);
         }
 
         Request request = builder.build();
@@ -234,31 +217,9 @@ public class Requester {
     }
 
     private void applyBody(RestRequest<?> apiRequest, Request.Builder builder) {
-        String method = apiRequest.getRoute().getMethod().toString();
-        RequestBody body = apiRequest.getBody();
-
-        if (body == null && HttpMethod.requiresRequestBody(method))
-            body = EMPTY_BODY;
-
-        builder.method(method, body);
     }
 
     private void applyHeaders(RestRequest<?> apiRequest, Request.Builder builder, boolean authorized) {
-        builder.header("user-agent", USER_AGENT)
-            .header("accept-encoding", "gzip")
-            .header("x-ratelimit-precision", "millisecond"); // still sending this in case of regressions
-
-        //adding token to all requests to the discord api or cdn pages
-        //we can check for startsWith(DISCORD_API_PREFIX) because the cdn endpoints don't need any kind of authorization
-        if (authorized)
-            builder.header("authorization", authConfig.getToken());
-
-        // Apply custom headers like X-Audit-Log-Reason
-        // If customHeaders is null this does nothing
-        if (apiRequest.getHeaders() != null) {
-            for (Entry<String, String> header : apiRequest.getHeaders().entrySet())
-                builder.addHeader(header.getKey(), header.getValue());
-        }
     }
 
     public OkHttpClient getHttpClient() {

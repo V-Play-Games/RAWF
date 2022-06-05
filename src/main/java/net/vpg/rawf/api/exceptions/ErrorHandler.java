@@ -18,6 +18,7 @@ package net.vpg.rawf.api.exceptions;
 import net.vpg.rawf.api.requests.ErrorResponse;
 import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.internal.utils.Checks;
+import net.vpg.rawf.internal.utils.Helpers;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -52,8 +53,6 @@ import java.util.function.Predicate;
  */
 @ParametersAreNonnullByDefault
 public class ErrorHandler implements Consumer<Throwable> {
-    private static final Consumer<? super Throwable> empty = (Consumer<Throwable>) e -> {
-    };
     private final Consumer<? super Throwable> base;
     private final Map<Predicate<? super Throwable>, Consumer<? super Throwable>> cases = new LinkedHashMap<>();
 
@@ -121,7 +120,7 @@ public class ErrorHandler implements Consumer<Throwable> {
      */
     @Nonnull
     public ErrorHandler ignore(Collection<ErrorResponse> errorResponses) {
-        return handle(errorResponses, empty);
+        return handle(errorResponses, Helpers.emptyConsumer());
     }
 
     /**
@@ -174,7 +173,7 @@ public class ErrorHandler implements Consumer<Throwable> {
      */
     @Nonnull
     public ErrorHandler ignore(Predicate<? super Throwable> condition) {
-        return handle(condition, empty);
+        return handle(condition, Helpers.emptyConsumer());
     }
 
     /**

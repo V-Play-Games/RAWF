@@ -31,10 +31,12 @@ public class Route {
     private final String route;
     private final Method method;
     private final int paramCount;
+    private final boolean requireAuth;
 
-    private Route(Method method, String route) {
+    private Route(Method method, String route, boolean requireAuth) {
         this.method = method;
         this.route = route;
+        this.requireAuth = requireAuth;
         this.paramCount = Helpers.countMatches(route, '{'); //All parameters start with {
 
         if (paramCount != Helpers.countMatches(route, '}'))
@@ -42,36 +44,36 @@ public class Route {
     }
 
     @Nonnull
-    public static Route custom(Method method, String route) {
+    public static Route custom(Method method, String route, boolean requireAuth) {
         Checks.notNull(method, "Method");
         Checks.notEmpty(route, "Route");
         Checks.noWhitespace(route, "Route");
-        return new Route(method, route);
+        return new Route(method, route, requireAuth);
     }
 
     @Nonnull
-    public static Route delete(String route) {
-        return custom(DELETE, route);
+    public static Route delete(String route, boolean requireAuth) {
+        return custom(DELETE, route, requireAuth);
     }
 
     @Nonnull
-    public static Route post(String route) {
-        return custom(POST, route);
+    public static Route post(String route, boolean requireAuth) {
+        return custom(POST, route, requireAuth);
     }
 
     @Nonnull
-    public static Route put(String route) {
-        return custom(PUT, route);
+    public static Route put(String route, boolean requireAuth) {
+        return custom(PUT, route, requireAuth);
     }
 
     @Nonnull
-    public static Route patch(String route) {
-        return custom(PATCH, route);
+    public static Route patch(String route, boolean requireAuth) {
+        return custom(PATCH, route, requireAuth);
     }
 
     @Nonnull
-    public static Route get(String route) {
-        return custom(GET, route);
+    public static Route get(String route, boolean requireAuth) {
+        return custom(GET, route, requireAuth);
     }
 
     public Method getMethod() {
@@ -84,6 +86,10 @@ public class Route {
 
     public int getParamCount() {
         return paramCount;
+    }
+
+    public boolean isAuthorizationRequired() {
+        return requireAuth;
     }
 
     public CompiledRoute compile(String... params) {

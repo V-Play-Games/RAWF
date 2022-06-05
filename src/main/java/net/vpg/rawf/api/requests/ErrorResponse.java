@@ -29,8 +29,7 @@ import java.util.function.Predicate;
  * Constants for easy use in {@link ErrorResponseException} and {@link net.vpg.rawf.api.exceptions.ErrorHandler ErrorHandler}.
  *
  * @see RestAction
- * @see net.vpg.rawf.api.exceptions.ErrorHandler ErrorHandler
- * @see <a href="https://discord.com/developers/docs/topics/opcodes-and-status-codes#json">Discord Error Codes</a>
+ * @see net.vpg.rawf.api.exceptions.ErrorHandler
  */
 @ParametersAreNonnullByDefault
 public interface ErrorResponse {

@@ -20,5 +20,5 @@ import net.vpg.rawf.api.requests.RestRequest;
 import java.util.Queue;
 
 public interface IBucket {
-    Queue<RestRequest> getRequests();
+    Queue<RestRequest<?>> getRequests();
 }

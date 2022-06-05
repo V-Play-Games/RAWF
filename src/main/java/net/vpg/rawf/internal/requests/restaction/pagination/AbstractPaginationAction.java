@@ -15,6 +15,7 @@
  */
 package net.vpg.rawf.internal.requests.restaction.pagination;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.requests.restaction.pagination.PaginationAction;
 import net.vpg.rawf.api.utils.Procedure;
 import net.vpg.rawf.internal.requests.RestActionImpl;
@@ -22,6 +23,7 @@ import net.vpg.rawf.internal.requests.Route;
 import net.vpg.rawf.internal.utils.Checks;
 
 import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -31,6 +33,7 @@ import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+@ParametersAreNonnullByDefault
 public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, M>>
     extends RestActionImpl<List<T>>
     implements PaginationAction<T, M> {
@@ -52,8 +55,8 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
      * @param minLimit     The inclusive minimum limit that can be used in {@link #limit(int)}
      * @param initialLimit The initial limit to use on the pagination endpoint
      */
-    public AbstractPaginationAction(/*JDA api,*/ Route.CompiledRoute route, int minLimit, int maxLimit, int initialLimit) {
-        super(route);
+    public AbstractPaginationAction(RestApi api, Route.CompiledRoute route, int minLimit, int maxLimit, int initialLimit) {
+        super(api, route);
         this.maxLimit = maxLimit;
         this.minLimit = minLimit;
         this.limit = new AtomicInteger(initialLimit);
@@ -64,8 +67,8 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
      * <br>This is used for PaginationActions that should not deal with
      * {@link #limit(int)}
      */
-    public AbstractPaginationAction(/*JDA api*/) {
-        super(null);
+    public AbstractPaginationAction(RestApi api) {
+        super(api, null);
         this.maxLimit = 0;
         this.minLimit = 0;
         this.limit = new AtomicInteger(0);
@@ -102,7 +105,7 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M timeout(long timeout, @Nonnull TimeUnit unit) {
+    public M timeout(long timeout, TimeUnit unit) {
         return (M) super.timeout(timeout, unit);
     }
 
@@ -132,7 +135,7 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
     @Nonnull
     @Override
     public T getLast() {
-        final T last = this.last;
+        T last = this.last;
         if (last == null)
             throw new NoSuchElementException("No entities have been retrieved yet.");
         return last;
@@ -149,7 +152,7 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M limit(final int limit) {
+    public M limit(int limit) {
         Checks.check(maxLimit == 0 || limit <= maxLimit, "Limit must not exceed %d!", maxLimit);
         Checks.check(minLimit == 0 || limit >= minLimit, "Limit must be greater or equal to %d", minLimit);
         this.limit.set(limit);
@@ -159,7 +162,7 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public M cache(final boolean enableCache) {
+    public M cache(boolean enableCache) {
         this.useCache = enableCache;
         return (M) this;
     }
@@ -218,12 +221,12 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
 
     @Nonnull
     @Override
-    public CompletableFuture<?> forEachAsync(@Nonnull final Procedure<? super T> action, @Nonnull final Consumer<? super Throwable> failure) {
+    public CompletableFuture<?> forEachAsync(Procedure<? super T> action, Consumer<? super Throwable> failure) {
         Checks.notNull(action, "Procedure");
         Checks.notNull(failure, "Failure Consumer");
 
-        final CompletableFuture<?> task = new CompletableFuture<>();
-        final Consumer<List<T>> acceptor = new ChainedConsumer(task, action, throwable -> {
+        CompletableFuture<?> task = new CompletableFuture<>();
+        Consumer<List<T>> acceptor = new ChainedConsumer(task, action, throwable -> {
             task.completeExceptionally(throwable);
             failure.accept(throwable);
         });
@@ -238,12 +241,12 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
 
     @Nonnull
     @Override
-    public CompletableFuture<?> forEachRemainingAsync(@Nonnull final Procedure<? super T> action, @Nonnull final Consumer<? super Throwable> failure) {
+    public CompletableFuture<?> forEachRemainingAsync(Procedure<? super T> action, Consumer<? super Throwable> failure) {
         Checks.notNull(action, "Procedure");
         Checks.notNull(failure, "Failure Consumer");
 
-        final CompletableFuture<?> task = new CompletableFuture<>();
-        final Consumer<List<T>> acceptor = new ChainedConsumer(task, action, throwable -> {
+        CompletableFuture<?> task = new CompletableFuture<>();
+        Consumer<List<T>> acceptor = new ChainedConsumer(task, action, throwable -> {
             task.completeExceptionally(throwable);
             failure.accept(throwable);
         });
@@ -257,7 +260,7 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
     }
 
     @Override
-    public void forEachRemaining(@Nonnull final Procedure<? super T> action) {
+    public void forEachRemaining(Procedure<? super T> action) {
         Checks.notNull(action, "Procedure");
         Queue<T> queue = new LinkedList<>();
         while (queue.addAll(getNextChunk())) {
@@ -287,7 +290,7 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
         if (!list.isEmpty())
             return list;
 
-        final int current = limit.getAndSet(getMaxLimit());
+        int current = limit.getAndSet(getMaxLimit());
         list = complete();
         limit.set(current);
         return list;
@@ -318,15 +321,14 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
         protected final Consumer<Throwable> throwableConsumer;
         protected boolean initial = true;
 
-        protected ChainedConsumer(final CompletableFuture<?> task, final Procedure<? super T> action,
-                                  final Consumer<Throwable> throwableConsumer) {
+        protected ChainedConsumer(CompletableFuture<?> task, Procedure<? super T> action, Consumer<Throwable> throwableConsumer) {
             this.task = task;
             this.action = action;
             this.throwableConsumer = throwableConsumer;
         }
 
         @Override
-        public void accept(final List<T> list) {
+        public void accept(List<T> list) {
             if (list.isEmpty() && !initial) {
                 task.complete(null);
                 return;
@@ -350,7 +352,7 @@ public abstract class AbstractPaginationAction<T, M extends PaginationAction<T, 
                 return;
             }
 
-            final int currentLimit = limit.getAndSet(maxLimit);
+            int currentLimit = limit.getAndSet(maxLimit);
             queue(this, throwableConsumer);
             limit.set(currentLimit);
         }

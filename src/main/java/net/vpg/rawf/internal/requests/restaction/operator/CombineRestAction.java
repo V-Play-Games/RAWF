@@ -15,6 +15,7 @@
  */
 package net.vpg.rawf.internal.requests.restaction.operator;
 
+import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.api.utils.MiscUtil;
 import net.vpg.rawf.internal.utils.Checks;
@@ -45,13 +46,13 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O> {
         action1.addCheck(checks);
         action2.addCheck(checks);
     }
-//
-//    @Nonnull
-//    @Override
-//    public JDA getJDA()
-//    {
-//        return action1.getJDA();
-//    }
+
+    @Nonnull
+    @Override
+    public RestApi getJDA()
+    {
+        return action1.getJDA();
+    }
 
     @Nonnull
     @Override
