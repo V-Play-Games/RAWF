@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import net.dv8tion.jda.internal.utils.Helpers;
+import net.vpg.rawf.internal.utils.Helpers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
