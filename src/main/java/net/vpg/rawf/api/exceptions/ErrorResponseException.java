@@ -22,8 +22,9 @@ import net.vpg.rawf.api.utils.data.DataArray;
 import net.vpg.rawf.api.utils.data.DataObject;
 import net.vpg.rawf.internal.utils.Checks;
 import net.vpg.rawf.internal.utils.Helpers;
-import net.vpg.rawf.internal.utils.JDALogger;
+import net.vpg.rawf.internal.utils.RAWFLogger;
 import org.jetbrains.annotations.Contract;
+import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
  */
 @ParametersAreNonnullByDefault
 public class ErrorResponseException extends RuntimeException {
+    private static final Logger LOGGER = RAWFLogger.getLog(ErrorResponseException.class);
     private final ErrorResponse errorResponse;
     private final RestResponse response;
     private final String meaning;
@@ -57,7 +59,7 @@ public class ErrorResponseException extends RuntimeException {
             : "\n" + schemaErrors.stream().map(SchemaError::toString).collect(Collectors.joining("\n"))));
 
         this.response = response;
-        if (response != null && response.getException() != null)
+        if (response.getException() != null)
             initCause(response.getException());
         this.errorResponse = errorResponse;
         this.code = code;
@@ -75,8 +77,8 @@ public class ErrorResponseException extends RuntimeException {
             Optional<DataObject> optObj = response.optObject();
             if (response.isError() && response.getException() != null) {
                 // this generally means that an exception occurred trying to
-                //make an http request. e.g.:
-                //SocketTimeoutException/ UnknownHostException
+                // make an http request. e.g.:
+                // SocketTimeoutException/ UnknownHostException
                 code = response.code;
                 meaning = response.getException().getClass().getName();
             } else if (optObj.isPresent()) {
@@ -88,7 +90,7 @@ public class ErrorResponseException extends RuntimeException {
                         meaning = obj.getString("message");
                 } else {
                     // This means that neither code or message is provided
-                    //In that case we simply put the raw response in place!
+                    // In that case we simply put the raw response in place!
                     code = response.code;
                     meaning = obj.toString();
                 }
@@ -100,7 +102,7 @@ public class ErrorResponseException extends RuntimeException {
                 meaning = response.getString();
             }
         } catch (Exception e) {
-            JDALogger.getLog(ErrorResponseException.class).error("Failed to parse parts of error response. Body: {}", response.getString(), e);
+            LOGGER.error("Failed to parse parts of error response. Body: {}", response.getString(), e);
         }
 
         return new ErrorResponseException(errorResponse, response, code, meaning, schemaErrors);

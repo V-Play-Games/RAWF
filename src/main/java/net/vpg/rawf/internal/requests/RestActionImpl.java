@@ -26,7 +26,7 @@ import net.vpg.rawf.api.utils.data.DataArray;
 import net.vpg.rawf.api.utils.data.DataObject;
 import net.vpg.rawf.internal.utils.Checks;
 import net.vpg.rawf.internal.utils.Helpers;
-import net.vpg.rawf.internal.utils.JDALogger;
+import net.vpg.rawf.internal.utils.RAWFLogger;
 import okhttp3.RequestBody;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class RestActionImpl<T> implements RestAction<T> {
-    public static final Logger LOG = JDALogger.getLog(RestAction.class);
+    public static final Logger LOG = RAWFLogger.getLog(RestAction.class);
     protected static boolean passContext = true;
     protected static long defaultTimeout = 0;
     private static Consumer<Object> DEFAULT_SUCCESS = Helpers.emptyConsumer();
@@ -134,7 +134,7 @@ public class RestActionImpl<T> implements RestAction<T> {
 
     @Nonnull
     @Override
-    public RestApi getJDA() {
+    public RestApi getApi() {
         return api;
     }
 

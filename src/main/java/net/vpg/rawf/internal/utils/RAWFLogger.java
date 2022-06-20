@@ -25,16 +25,16 @@ import java.util.Map;
 import java.util.ServiceLoader;
 
 /**
- * This class serves as a LoggerFactory for JDA's internals.
+ * This class serves as a LoggerFactory for RAWF's internals.
  * <br>It will either return a Logger from a SLF4J implementation via {@link LoggerFactory} if present,
  * or an instance of a custom {@link SimpleLogger} (From slf4j-simple).
  * <p>
  * It also has the utility method {@link #getLazyString(LazyEvaluation)} which is used to lazily construct Strings for Logging.
  */
-public class JDALogger {
+public class RAWFLogger {
     /**
      * Marks whether or not a SLF4J <code>StaticLoggerBinder</code> (pre 1.8.x) or
-     * <code>SLF4JServiceProvider</code> implementation (1.8.x+) was found. If false, JDA will use its fallback logger.
+     * <code>SLF4JServiceProvider</code> implementation (1.8.x+) was found. If false, RAWF will use its fallback logger.
      * <br>This variable is initialized during static class initialization.
      */
     public static final boolean SLF4J_ENABLED;
@@ -58,8 +58,8 @@ public class JDALogger {
             } catch (ClassNotFoundException eService) {
                 // there was no service provider interface (SLF4J 1.8.x+)
 
-                //prints warning of missing implementation
-                LoggerFactory.getLogger(JDALogger.class);
+                // prints warning of missing implementation
+                LoggerFactory.getLogger(RAWFLogger.class);
 
                 tmp = false;
             }
@@ -68,7 +68,7 @@ public class JDALogger {
         SLF4J_ENABLED = tmp;
     }
 
-    private JDALogger() {
+    private RAWFLogger() {
     }
 
     /**

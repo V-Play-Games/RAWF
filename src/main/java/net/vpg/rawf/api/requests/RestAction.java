@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 /**
  * A class representing a terminal between the user and the discord API.
- * <br>This is used to offer users the ability to decide how JDA should limit a Request.
+ * <br>This is used to offer users the ability to decide how RAWF should limit a Request.
  *
  * <p>Methods that return an instance of RestAction require an additional step
  * to complete the execution. Thus the user needs to append a follow-up method.
@@ -87,7 +87,7 @@ import java.util.stream.Collectors;
  *
  * <p>All of those operations provide overloads for optional parameters such as a custom
  * {@link ScheduledExecutorService} instead of using the default
- * global JDA executor. Specifically {@link #queueAfter(long, TimeUnit)} has overloads
+ * global RAWF executor. Specifically {@link #queueAfter(long, TimeUnit)} has overloads
  * to provide a success and/or failure callback due to the returned {@link ScheduledFuture}
  * not being able to provide the response values of the {@link #queue()} callbacks.
  *
@@ -333,12 +333,12 @@ public interface RestAction<T> {
     }
 
     /**
-     * The current JDA instance
+     * The current RestApi instance
      *
-     * @return The corresponding JDA instance
+     * @return The corresponding RestApi instance
      */
     @Nonnull
-    RestApi getJDA();
+    RestApi getApi();
 
     /**
      * The current checks for this RestAction.
@@ -411,7 +411,7 @@ public interface RestAction<T> {
      * Similar to {@link #timeout(long, TimeUnit)} but schedules a deadline at which the request has to be completed.
      * <br>If the deadline is reached, the request will fail with a {@link java.util.concurrent.TimeoutException}.
      *
-     * <p>This does not mean that the request will immediately timeout when the deadline is reached. JDA will check the deadline
+     * <p>This does not mean that the request will immediately timeout when the deadline is reached. RAWF will check the deadline
      * right before executing the request or within intervals in a worker thread. This only means the request will timeout
      * if the deadline has passed.
      *
@@ -431,192 +431,166 @@ public interface RestAction<T> {
         throw new UnsupportedOperationException();
     }
 
-    //    /**
-//     * Submits a Request for execution.
-//     * <br>Using the default callback functions:
-//     * {@link #setDefaultSuccess(Consumer)} and {@link #setDefaultFailure(Consumer)}
-//     *
-//     * <p>To access the response you can use {@link #queue(java.util.function.Consumer)}
-//     * and to handle failures use {@link #queue(java.util.function.Consumer, java.util.function.Consumer)}.
-//     *
-//     * <p><b>This method is asynchronous</b>
-//     *
-//     * <h4>Example</h4>
-//     * <pre>{@code
-//     * public static void sendMessage(MessageChannel channel, String content)
-//     * {
-//     *     // sendMessage returns "MessageAction" which is a specialization for "RestAction<Message>"
-//     *     RestAction<Message> action = channel.sendMessage(content);
-//     *     // call queue() to send the message off to discord.
-//     *     action.queue();
-//     * }
-//     * }</pre>
-//     *
-//     * @throws java.util.concurrent.RejectedExecutionException
-//     *         If the requester has been shutdown by {@link JDA#shutdown()} or {@link JDA#shutdownNow()}
-//     *
-//     * @see #queue(java.util.function.Consumer) queue(Consumer)
-//     * @see #queue(java.util.function.Consumer, java.util.function.Consumer) queue(Consumer, Consumer)
-//     */
+    /**
+     * Submits a Request for execution.
+     * <br>Using the default callback functions:
+     * {@link #setDefaultSuccess(Consumer)} and {@link #setDefaultFailure(Consumer)}
+     *
+     * <p>To access the response you can use {@link #queue(java.util.function.Consumer)}
+     * and to handle failures use {@link #queue(java.util.function.Consumer, java.util.function.Consumer)}.
+     *
+     * <p><b>This method is asynchronous</b>
+     *
+     * <h4>Example</h4>
+     * <pre>{@code
+     * public static void sendMessage(MessageChannel channel, String content)
+     * {
+     *     // sendMessage returns "MessageAction" which is a specialization for "RestAction<Message>"
+     *     RestAction<Message> action = channel.sendMessage(content);
+     *     // call queue() to send the message off to discord.
+     *     action.queue();
+     * }
+     * }</pre>
+     *
+     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
+     * @see #queue(java.util.function.Consumer) queue(Consumer)
+     * @see #queue(java.util.function.Consumer, java.util.function.Consumer) queue(Consumer, Consumer)
+     */
     default void queue() {
         queue(null);
     }
 
-    //    /**
-//     * Submits a Request for execution.
-//     * <br>Using the default failure callback function.
-//     *
-//     * <p>To handle failures use {@link #queue(java.util.function.Consumer, java.util.function.Consumer)}.
-//     *
-//     * <p><b>This method is asynchronous</b>
-//     *
-//     * <h4>Example</h4>
-//     * <pre>{@code
-//     * public static void sendPrivateMessage(User user, String content)
-//     * {
-//     *     // The "<PrivateChannel>" is the response type for the parameter in the success callback
-//     *     RestAction<PrivateChannel> action = user.openPrivateChannel();
-//     *     // "channel" is the identifier we use to access the channel of the response
-//     *     // this is like the "user" we declared above, just a name for the function parameter
-//     *     action.queue((channel) -> channel.sendMessage(content).queue());
-//     * }
-//     * }</pre>
-//     *
-//     * @throws java.util.concurrent.RejectedExecutionException
-//     *         If the requester has been shutdown by {@link JDA#shutdown()} or {@link JDA#shutdownNow()}
-//     *
-//     * @param  success
-//     *         The success callback that will be called at a convenient time
-//     *         for the API. (can be null)
-//     *
-//     * @see    #queue(java.util.function.Consumer, java.util.function.Consumer) queue(Consumer, Consumer)
-//     */
+    /**
+     * Submits a Request for execution.
+     * <br>Using the default failure callback function.
+     *
+     * <p>To handle failures use {@link #queue(java.util.function.Consumer, java.util.function.Consumer)}.
+     *
+     * <p><b>This method is asynchronous</b>
+     *
+     * <h4>Example</h4>
+     * <pre>{@code
+     * public static void sendPrivateMessage(User user, String content)
+     * {
+     *     // The "<PrivateChannel>" is the response type for the parameter in the success callback
+     *     RestAction<PrivateChannel> action = user.openPrivateChannel();
+     *     // "channel" is the identifier we use to access the channel of the response
+     *     // this is like the "user" we declared above, just a name for the function parameter
+     *     action.queue((channel) -> channel.sendMessage(content).queue());
+     * }
+     * }</pre>
+     *
+     * @param success The success callback that will be called at a convenient time
+     *                for the API. (can be null)
+     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
+     * @see #queue(java.util.function.Consumer, java.util.function.Consumer) queue(Consumer, Consumer)
+     */
     default void queue(@Nullable Consumer<? super T> success) {
         queue(success, null);
     }
 
-    //    /**
-//     * Submits a Request for execution.
-//     *
-//     * <p><b>This method is asynchronous</b>
-//     *
-//     * <h4>Example</h4>
-//     * <pre>{@code
-//     * public static void sendPrivateMessage(JDA jda, String userId, String content)
-//     * {
-//     *     // Retrieve the user by their id
-//     *     RestAction<User> action = jda.retrieveUserById(userId);
-//     *     action.queue(
-//     *         // Handle success if the user exists
-//     *         (user) -> user.openPrivateChannel().queue(
-//     *             (channel) -> channel.sendMessage(content).queue()),
-//     *
-//     *         // Handle failure if the user does not exist (or another issue appeared)
-//     *         (error) -> error.printStackTrace()
-//     *     );
-//     *
-//     *     // Alternatively use submit() to remove nested callbacks
-//     * }
-//     * }</pre>
-//     *
-//     * @throws java.util.concurrent.RejectedExecutionException
-//     *         If the requester has been shutdown by {@link JDA#shutdown()} or {@link JDA#shutdownNow()}
-//     *
-//     * @param  success
-//     *         The success callback that will be called at a convenient time
-//     *         for the API. (can be null to use default)
-//     * @param  failure
-//     *         The failure callback that will be called if the Request
-//     *         encounters an exception at its execution point. (can be null to use default)
-//     *
-//     * @see    #submit()
-//     * @see    net.vpg.rawf.api.exceptions.ErrorHandler
-//     */
+    /**
+     * Submits a Request for execution.
+     *
+     * <p><b>This method is asynchronous</b>
+     *
+     * <h4>Example</h4>
+     * <pre>{@code
+     * public static void sendPrivateMessage(JDA jda, String userId, String content)
+     * {
+     *     // Retrieve the user by their id
+     *     RestAction<User> action = jda.retrieveUserById(userId);
+     *     action.queue(
+     *         // Handle success if the user exists
+     *         (user) -> user.openPrivateChannel().queue(
+     *             (channel) -> channel.sendMessage(content).queue()),
+     *
+     *         // Handle failure if the user does not exist (or another issue appeared)
+     *         (error) -> error.printStackTrace()
+     *     );
+     *
+     *     // Alternatively use submit() to remove nested callbacks
+     * }
+     * }</pre>
+     *
+     * @param success The success callback that will be called at a convenient time
+     *                for the API. (can be null to use default)
+     * @param failure The failure callback that will be called if the Request
+     *                encounters an exception at its execution point. (can be null to use default)
+     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
+     * @see #submit()
+     * @see net.vpg.rawf.api.exceptions.ErrorHandler
+     */
     void queue(@Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure);
 
-    //    /**
-//     * Blocks the current Thread and awaits the completion
-//     * of an {@link #submit()} request.
-//     * <br>Used for synchronous logic.
-//     *
-//     * <p><b>This might throw {@link java.lang.RuntimeException RuntimeExceptions}</b>
-//     *
-//     * @throws java.util.concurrent.RejectedExecutionException
-//     *         If the requester has been shutdown by {@link JDA#shutdown()} or {@link JDA#shutdownNow()}
-//     * @throws IllegalStateException
-//     *         If used within a {@link #queue(Consumer, Consumer) queue(...)} callback
-//     *
-//     * @return The response value
-//     */
+    /**
+     * Blocks the current Thread and awaits the completion
+     * of an {@link #submit()} request.
+     * <br>Used for synchronous logic.
+     *
+     * <p><b>This might throw {@link java.lang.RuntimeException RuntimeExceptions}</b>
+     *
+     * @return The response value
+     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
+     * @throws IllegalStateException                           If used within a {@link #queue(Consumer, Consumer) queue(...)} callback
+     */
     default T complete() {
         return complete(true);
     }
 
-    //    /**
-//     * Blocks the current Thread and awaits the completion
-//     * of an {@link #submit()} request.
-//     * <br>Used for synchronous logic.
-//     *
-//     * @param  shouldQueue
-//     *         Whether this should automatically handle rate limitations (default true)
-//     *
-//     * @throws java.util.concurrent.RejectedExecutionException
-//     *         If the requester has been shutdown by {@link JDA#shutdown()} or {@link JDA#shutdownNow()}
-//     * @throws IllegalStateException
-//     *         If used within a {@link #queue(Consumer, Consumer) queue(...)} callback
-//     * @throws RateLimitedException
-//     *         If we were rate limited and the {@code shouldQueue} is false.
-//     *         Use {@link #complete()} to avoid this Exception.
-//     *
-//     * @return The response value
-//     */
+    /**
+     * Blocks the current Thread and awaits the completion
+     * of an {@link #submit()} request.
+     * <br>Used for synchronous logic.
+     *
+     * @param shouldQueue Whether this should automatically handle rate limitations (default true)
+     * @return The response value
+     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
+     * @throws IllegalStateException                           If used within a {@link #queue(Consumer, Consumer) queue(...)} callback
+     * @throws RateLimitedException                            If we were rate limited and the {@code shouldQueue} is false.
+     *                                                         Use {@link #complete()} to avoid this Exception.
+     */
     T complete(boolean shouldQueue);
 
-    //    /**
-//     * Submits a Request for execution and provides a {@link java.util.concurrent.CompletableFuture}
-//     * representing its completion task.
-//     * <br>Cancelling the returned Future will result in the cancellation of the Request!
-//     *
-//     * <h4>Example</h4>
-//     * <pre>{@code
-//     * public static void sendPrivateMessage(JDA jda, String userId, String content)
-//     * {
-//     *     // Retrieve the user by their id
-//     *     RestAction<User> action = jda.retrieveUserById(userId);
-//     *     action.submit() // CompletableFuture<User>
-//     *           // Handle success if the user exists
-//     *           .thenCompose((user) -> user.openPrivateChannel().submit()) // CompletableFuture<PrivateChannel>
-//     *           .thenCompose((channel) -> channel.sendMessage(content).submit()) // CompletableFuture<Void>
-//     *           .whenComplete((v, error) -> {
-//     *               // Handle failure if the user does not exist (or another issue appeared)
-//     *               if (error != null) error.printStackTrace();
-//     *           });
-//     * }
-//     * }</pre>
-//     *
-//     * @throws java.util.concurrent.RejectedExecutionException
-//     *         If the requester has been shutdown by {@link JDA#shutdown()} or {@link JDA#shutdownNow()}
-//     *
-//     * @return Never-null {@link java.util.concurrent.CompletableFuture} representing the completion promise
-//     */
+    /**
+     * Submits a Request for execution and provides a {@link java.util.concurrent.CompletableFuture}
+     * representing its completion task.
+     * <br>Cancelling the returned Future will result in the cancellation of the Request!
+     *
+     * <h4>Example</h4>
+     * <pre>{@code
+     * public static void sendPrivateMessage(JDA jda, String userId, String content)
+     * {
+     *     // Retrieve the user by their id
+     *     RestAction<User> action = jda.retrieveUserById(userId);
+     *     action.submit() // CompletableFuture<User>
+     *           // Handle success if the user exists
+     *           .thenCompose((user) -> user.openPrivateChannel().submit()) // CompletableFuture<PrivateChannel>
+     *           .thenCompose((channel) -> channel.sendMessage(content).submit()) // CompletableFuture<Void>
+     *           .whenComplete((v, error) -> {
+     *               // Handle failure if the user does not exist (or another issue appeared)
+     *               if (error != null) error.printStackTrace();
+     *           });
+     * }
+     * }</pre>
+     *
+     * @return Never-null {@link java.util.concurrent.CompletableFuture} representing the completion promise
+     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
+     */
     @Nonnull
     default CompletableFuture<T> submit() {
         return submit(true);
     }
 
-    //    /**
-//     * Submits a Request for execution and provides a {@link java.util.concurrent.CompletableFuture}
-//     * representing its completion task.
-//     * <br>Cancelling the returned Future will result in the cancellation of the Request!
-//     *
-//     * @throws java.util.concurrent.RejectedExecutionException
-//     *         If the requester has been shutdown by {@link JDA#shutdown()} or {@link JDA#shutdownNow()}
-//     *
-//     * @param  shouldQueue
-//     *         Whether the Request should automatically handle rate limitations. (default true)
-//     *
-//     * @return Never-null {@link java.util.concurrent.CompletableFuture} task representing the completion promise
-//     */
+    /**
+     * Submits a Request for execution and provides a {@link java.util.concurrent.CompletableFuture}
+     * representing its completion task.
+     * <br>Cancelling the returned Future will result in the cancellation of the Request!
+     *
+     * @param shouldQueue Whether the Request should automatically handle rate limitations. (default true)
+     * @return Never-null {@link java.util.concurrent.CompletableFuture} task representing the completion promise
+     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
+     */
     @Nonnull
     CompletableFuture<T> submit(boolean shouldQueue);
 
@@ -966,7 +940,7 @@ public interface RestAction<T> {
      * }</pre>
      *
      * @param duration  The delay
-     * @param scheduler The scheduler to use, null to use { JDA#getRateLimitPool()}
+     * @param scheduler The scheduler to use, null to use {@link RestApi#getRateLimitPool()}
      * @return RestAction with delay
      * @see #queueAfter(long, TimeUnit, ScheduledExecutorService)
      * @since 4.1.1
@@ -1024,7 +998,7 @@ public interface RestAction<T> {
      *
      * @param delay     The delay value
      * @param unit      The time unit for the delay value
-     * @param scheduler The scheduler to use, null to use { JDA#getRateLimitPool()}
+     * @param scheduler The scheduler to use, null to use {@link RestApi#getRateLimitPool()}
      * @return RestAction with delay
      * @see #queueAfter(long, TimeUnit, ScheduledExecutorService)
      * @since 4.1.1
@@ -1044,7 +1018,7 @@ public interface RestAction<T> {
      * <p>Similar to {@link #queueAfter(long, TimeUnit)} but does not require callbacks to be passed.
      * Continuations of {@link CompletableFuture} can be used instead.
      *
-     * <p>The global JDA RateLimit {@link ScheduledExecutorService}
+     * <p>The global RAWF RateLimit {@link ScheduledExecutorService}
      * is used for this operation.
      * <br>You can provide your own Executor using {@link #submitAfter(long, TimeUnit, ScheduledExecutorService)}!
      *
@@ -1080,8 +1054,8 @@ public interface RestAction<T> {
     @Nonnull
     default DelayedCompletableFuture<T> submitAfter(long delay, TimeUnit unit, @Nullable ScheduledExecutorService executor) {
         Checks.notNull(unit, "TimeUnit");
-//        if (executor == null)
-//            executor = getJDA().getRateLimitPool();
+        if (executor == null)
+            executor = getApi().getRateLimitPool();
         return DelayedCompletableFuture.make(executor, delay, unit,
             task -> {
                 Consumer<? super Throwable> onFailure = ContextException.wrapIfApplicable(task::completeExceptionally);
@@ -1120,7 +1094,7 @@ public interface RestAction<T> {
      * <br>Use {@link #queueAfter(long, TimeUnit, Consumer)} to access
      * the success consumer for {@link #queue(Consumer)}!
      *
-     * <p>The global JDA {@link ScheduledExecutorService} is used for this operation.
+     * <p>The global RAWF {@link ScheduledExecutorService} is used for this operation.
      * <br>You can provide your own Executor with {@link #queueAfter(long, TimeUnit, ScheduledExecutorService)}
      *
      * @param delay The delay after which this computation should be executed, negative to execute immediately
@@ -1143,7 +1117,7 @@ public interface RestAction<T> {
      * <br>Use {@link #queueAfter(long, TimeUnit, Consumer, Consumer)} to access
      * the failure consumer for {@link #queue(Consumer, Consumer)}!
      *
-     * <p>The global JDA {@link ScheduledExecutorService} is used for this operation.
+     * <p>The global RAWF {@link ScheduledExecutorService} is used for this operation.
      * <br>You can provide your own Executor with {@link #queueAfter(long, TimeUnit, Consumer, ScheduledExecutorService)}
      *
      * @param delay   The delay after which this computation should be executed, negative to execute immediately
@@ -1165,7 +1139,7 @@ public interface RestAction<T> {
      * <br>This is an <b>asynchronous</b> operation that will return a
      * {@link ScheduledFuture} representing the task.
      *
-     * <p>The global JDA {@link ScheduledExecutorService} is used for this operation.
+     * <p>The global RAWF {@link ScheduledExecutorService} is used for this operation.
      * <br>You provide your own Executor with {@link #queueAfter(long, TimeUnit, Consumer, Consumer, ScheduledExecutorService)}
      *
      * @param delay   The delay after which this computation should be executed, negative to execute immediately
@@ -1258,8 +1232,8 @@ public interface RestAction<T> {
     @Nonnull
     default ScheduledFuture<?> queueAfter(long delay, TimeUnit unit, @Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure, @Nullable ScheduledExecutorService executor) {
         Checks.notNull(unit, "TimeUnit");
-//        if (executor == null)
-//            executor = getJDA().getRateLimitPool();
+        if (executor == null)
+            executor = getApi().getRateLimitPool();
         Consumer<? super Throwable> onFailure = ContextException.wrapIfApplicable(failure);
         Runnable task = () -> queue(success, onFailure);
         return executor.schedule(task, delay, unit);

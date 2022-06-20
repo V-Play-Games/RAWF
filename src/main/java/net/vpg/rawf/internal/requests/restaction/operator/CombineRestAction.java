@@ -49,9 +49,8 @@ public class CombineRestAction<I1, I2, O> implements RestAction<O> {
 
     @Nonnull
     @Override
-    public RestApi getJDA()
-    {
-        return action1.getJDA();
+    public RestApi getApi() {
+        return action1.getApi();
     }
 
     @Nonnull

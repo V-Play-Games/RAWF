@@ -29,7 +29,7 @@ import java.util.zip.InflaterInputStream;
 import java.util.zip.ZipException;
 
 public class IOUtil {
-    private static final Logger log = JDALogger.getLog(IOUtil.class);
+    private static final Logger log = RAWFLogger.getLog(IOUtil.class);
 
     public static void silentClose(AutoCloseable closeable) {
         try {
@@ -164,8 +164,7 @@ public class IOUtil {
      * @param response The not-null Response object
      * @return InputStream representing the body of this response
      */
-    @SuppressWarnings("ConstantConditions")
-    // methods here don't return null despite the annotations on them, read the docs
+    @SuppressWarnings("ConstantConditions") // methods here don't return null despite the annotations on them, read the docs
     public static InputStream getBody(Response response) throws IOException {
         String encoding = response.header("content-encoding", "");
         InputStream data = new BufferedInputStream(response.body().byteStream());
@@ -178,7 +177,7 @@ public class IOUtil {
         } catch (ZipException | EOFException ex) {
             data.reset(); // reset to get full content
             log.error("Failed to read gzip content for response. Headers: {}\nContent: '{}'",
-                response.headers(), JDALogger.getLazyString(() -> new String(data.readAllBytes())), ex);
+                response.headers(), RAWFLogger.getLazyString(() -> new String(data.readAllBytes())), ex);
             return null;
         }
         return data;

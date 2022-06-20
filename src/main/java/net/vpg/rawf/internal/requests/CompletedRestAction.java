@@ -47,8 +47,7 @@ public class CompletedRestAction<T> implements RestAction<T> {
 
     @Nonnull
     @Override
-    public RestApi getJDA()
-    {
+    public RestApi getApi() {
         return api;
     }
 

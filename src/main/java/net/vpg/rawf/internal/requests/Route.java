@@ -37,7 +37,7 @@ public class Route {
         this.method = method;
         this.route = route;
         this.requireAuth = requireAuth;
-        this.paramCount = Helpers.countMatches(route, '{'); //All parameters start with {
+        this.paramCount = Helpers.countMatches(route, '{'); // All parameters start with {
 
         if (paramCount != Helpers.countMatches(route, '}'))
             throw new IllegalArgumentException("An argument does not have both {}'s for route: " + method + " " + route);

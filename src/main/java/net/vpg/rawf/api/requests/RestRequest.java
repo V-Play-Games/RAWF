@@ -17,7 +17,6 @@ package net.vpg.rawf.api.requests;
 
 import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.exceptions.ContextException;
-import net.vpg.rawf.api.exceptions.ErrorResponseException;
 import net.vpg.rawf.api.exceptions.RateLimitedException;
 import net.vpg.rawf.internal.requests.CallbackContext;
 import net.vpg.rawf.internal.requests.RestActionImpl;
@@ -66,7 +65,7 @@ public class RestRequest<T> {
         this.route = route;
         this.headers = headers;
 
-        this.api = restAction.getJDA();
+        this.api = restAction.getApi();
     }
 
     public void onSuccess(T successObj) {
@@ -75,15 +74,11 @@ public class RestRequest<T> {
         done = true;
         api.getCallbackPool().execute(() ->
         {
-            try (CallbackContext ___ = CallbackContext.getInstance())
-            {
+            try (CallbackContext ___ = CallbackContext.getInstance()) {
                 onSuccess.accept(successObj);
-            }
-            catch (Throwable t)
-            {
+            } catch (Throwable t) {
                 RestActionImpl.LOG.error("Encountered error while processing success consumer", t);
-                if (t instanceof Error)
-                {
+                if (t instanceof Error) {
 //                    api.handleEvent(new ExceptionEvent(api, t, true));
                     throw (Error) t;
                 }
@@ -95,8 +90,6 @@ public class RestRequest<T> {
         if (response.code == 429) {
             onFailure(new RateLimitedException(route, response.retryAfter));
         } else {
-//            onFailure(ErrorResponseException.create(
-//                ErrorResponse.fromJSON(response.optObject().orElse(null)), response));
         }
     }
 
@@ -106,15 +99,11 @@ public class RestRequest<T> {
         done = true;
         api.getCallbackPool().execute(() ->
         {
-            try (CallbackContext ___ = CallbackContext.getInstance())
-            {
+            try (CallbackContext ___ = CallbackContext.getInstance()) {
                 onFailure.accept(failException);
-            }
-            catch (Throwable t)
-            {
+            } catch (Throwable t) {
                 RestActionImpl.LOG.error("Encountered error while processing failure consumer", t);
-                if (t instanceof Error)
-                {
+                if (t instanceof Error) {
 //                    api.handleEvent(new ExceptionEvent(api, t, true));
                     throw (Error) t;
                 }

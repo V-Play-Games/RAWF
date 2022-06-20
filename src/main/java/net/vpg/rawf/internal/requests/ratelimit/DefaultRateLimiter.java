@@ -20,7 +20,7 @@ import net.vpg.rawf.api.utils.MiscUtil;
 import net.vpg.rawf.internal.requests.AbstractRateLimiter;
 import net.vpg.rawf.internal.requests.Requester;
 import net.vpg.rawf.internal.requests.Route;
-import net.vpg.rawf.internal.utils.JDALogger;
+import net.vpg.rawf.internal.utils.RAWFLogger;
 import okhttp3.Headers;
 import okhttp3.Response;
 import org.jetbrains.annotations.Contract;
@@ -56,7 +56,7 @@ This is done during the queue work iteration so many requests to one endpoint wo
 For example, the first message sending:
 
     public void onReady(ReadyEvent event) {
-      TextChannel channel = event.getJDA().getTextChannelById("123");
+      TextChannel channel = event.getApi().getTextChannelById("123");
       for (int i = 1; i <= 100; i++) {
         channel.sendMessage("Message: " + i).queue();
       }
@@ -68,7 +68,7 @@ Once the response is handled we continue with the next request in the unlimited 
 
  */
 public class DefaultRateLimiter extends AbstractRateLimiter {
-    private static final Logger LOGGER = JDALogger.getLog(DefaultRateLimiter.class);
+    private static final Logger LOGGER = RAWFLogger.getLog(DefaultRateLimiter.class);
     private static final String RESET_AFTER_HEADER = "X-RateLimit-Reset-After";
     private static final String RESET_HEADER = "X-RateLimit-Reset";
     private static final String LIMIT_HEADER = "X-RateLimit-Limit";
@@ -99,7 +99,7 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
     }
 
     private ScheduledExecutorService getScheduler() {
-        return requester.getJDA().getRateLimitPool();
+        return requester.getApi().getRateLimitPool();
     }
 
     @Override
@@ -240,12 +240,12 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
                     long retryAfter = parseLong(retryAfterHeader) * 1000; // seconds precision
                     // Handle global rate limit if necessary
                     if (global) {
-//                        requester.getJDA().getSessionController().setGlobalRatelimit(now + retryAfter);
+                        requester.getApi().setGlobalRateLimit(now + retryAfter);
                         LOGGER.error("Encountered global rate limit! Retry-After: {} ms", retryAfter);
                     }
                     // Handle cloudflare rate limits, this applies to all routes and uses seconds for retry-after
                     else if (cloudflare) {
-//                        requester.getJDA().getSessionController().setGlobalRatelimit(now + retryAfter);
+                        requester.getApi().setGlobalRateLimit(now + retryAfter);
                         LOGGER.error("Encountered cloudflare rate limit! Retry-After: {} s", retryAfter / 1000);
                     }
                     // Handle hard rate limit, pretty much just log that it happened
@@ -272,14 +272,10 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
                 String limitHeader = headers.get(LIMIT_HEADER);
                 String remainingHeader = headers.get(REMAINING_HEADER);
                 String resetAfterHeader = headers.get(RESET_AFTER_HEADER);
-                String resetHeader = headers.get(RESET_HEADER);
 
                 bucket.limit = (int) Math.max(1L, parseLong(limitHeader));
                 bucket.remaining = (int) parseLong(remainingHeader);
-//                if (requester.getJDA().isRelativeRateLimit())
-//                    bucket.reset = now + parseDouble(resetAfterHeader);
-//                else
-//                    bucket.reset = parseDouble(resetHeader);
+                bucket.reset = now + parseDouble(resetAfterHeader);
                 LOGGER.trace("Updated bucket {} to ({}/{}, {})", bucket.bucketId, bucket.remaining, bucket.limit, bucket.reset - now);
                 return bucket;
             } catch (Exception e) {
@@ -338,12 +334,12 @@ public class DefaultRateLimiter extends AbstractRateLimiter {
         }
 
         private boolean isGlobalRateLimit() {
-            return /*requester.getJDA().getSessionController().getGlobalRatelimit() > getNow()*/ false;
+            return /*requester.getApi().getSessionController().getGlobalRatelimit() > getNow()*/ false;
         }
 
         public long getRateLimit() {
             long now = getNow();
-            long global = /*requester.getJDA().getSessionController().getGlobalRatelimit()*/0;
+            long global = /*requester.getApi().getSessionController().getGlobalRatelimit()*/0;
             // Global rate limit is more important to handle
             if (global > now)
                 return global - now;

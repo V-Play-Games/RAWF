@@ -3,7 +3,7 @@ package net.vpg.rawf.api.requests;
 import net.vpg.rawf.internal.requests.Route;
 import okhttp3.Response;
 
-//TODO: Docs
+// TODO: Docs
 public interface RateLimiter {
     long getRateLimit(Route.CompiledRoute route);
 

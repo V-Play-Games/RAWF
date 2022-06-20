@@ -17,7 +17,6 @@ package net.vpg.rawf.api.utils;
 
 import net.vpg.rawf.api.exceptions.HttpException;
 import net.vpg.rawf.internal.requests.FunctionalCallback;
-import net.vpg.rawf.internal.requests.Requester;
 import net.vpg.rawf.internal.utils.Checks;
 import net.vpg.rawf.internal.utils.FutureUtil;
 import net.vpg.rawf.internal.utils.IOUtil;
@@ -120,7 +119,6 @@ public class FileProxy {
     protected Request getRequest(String url) {
         return new Request.Builder()
             .url(url)
-            .addHeader("user-agent", Requester.USER_AGENT)
             .addHeader("accept-encoding", "gzip, deflate")
             .build();
     }
@@ -167,25 +165,25 @@ public class FileProxy {
         List<String> segments = parsedUrl.pathSegments();
         String fileName = segments.get(segments.size() - 1);
 
-        //Download to a file named the same as the last segment of the URL
+        // Download to a file named the same as the last segment of the URL
         return downloadToPath(Paths.get(fileName));
     }
 
     protected CompletableFuture<Path> downloadToPath(String url, Path path) {
-        //Check if the parent path, the folder, exists
+        // Check if the parent path, the folder, exists
         Checks.check(Files.notExists(path.getParent()), "Parent folder of the file '" + path.toAbsolutePath() + "' does not exist.");
 
         DownloadTask downloadTask = downloadInternal(url);
 
         return FutureUtil.thenApplyCancellable(downloadTask.getFuture(), stream -> {
             try {
-                //Temporary file follows this pattern: filename + random_number + ".part"
+                // Temporary file follows this pattern: filename + random_number + ".part"
                 // The random number is generated until a filename becomes valid, until no file with the same name exists in the tmp directory
                 Path tmpPath = Files.createTempFile(path.getFileName().toString(), ".part");
-                //A user might use a file's presence as an indicator of something being successfully downloaded,
-                //This might prevent a file from being partial, say, if the user shuts down its bot while it's downloading something
-                //Meanwhile, the time window to "corrupt" a file is very small when moving it
-                //This is why we copy the file into a temporary file and then move it.
+                // A user might use a file's presence as an indicator of something being successfully downloaded,
+                // This might prevent a file from being partial, say, if the user shuts down its bot while it's downloading something
+                // Meanwhile, the time window to "corrupt" a file is very small when moving it
+                // This is why we copy the file into a temporary file and then move it.
                 Files.copy(stream, tmpPath, StandardCopyOption.REPLACE_EXISTING);
                 Files.move(tmpPath, path, StandardCopyOption.REPLACE_EXISTING);
                 return path;
@@ -197,7 +195,7 @@ public class FileProxy {
         }, downloadTask::cancelCall);
     }
 
-    //API DOWNLOAD METHOD
+    // API DOWNLOAD METHODS
 
     /**
      * Retrieves the {@link InputStream} of this file

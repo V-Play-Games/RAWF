@@ -378,11 +378,9 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * //deletes messages until it finds a user that is still in guild
-     * public void cleanupMessages(MessagePaginationAction action)
-     * {
-     *     action.forEachAsync( (message) ->
-     *     {
+     * // deletes messages until it finds a user that is still in guild
+     * public void cleanupMessages(MessagePaginationAction action) {
+     *     action.forEachAsync(message -> {
      *         Guild guild = message.getGuild();
      *         if (!guild.isMember(message.getAuthor()))
      *             message.delete().queue();
@@ -414,11 +412,9 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * //deletes messages until it finds a user that is still in guild
-     * public void cleanupMessages(MessagePaginationAction action)
-     * {
-     *     action.forEachAsync( (message) ->
-     *     {
+     * // deletes messages until it finds a user that is still in guild
+     * public void cleanupMessages(MessagePaginationAction action) {
+     *     action.forEachAsync(message -> {
      *         Guild guild = message.getGuild();
      *         if (!guild.isMember(message.getAuthor()))
      *             message.delete().queue();
@@ -449,11 +445,9 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * //deletes messages until it finds a user that is still in guild
-     * public void cleanupMessages(MessagePaginationAction action)
-     * {
-     *     action.forEachRemainingAsync( (message) ->
-     *     {
+     * // deletes messages until it finds a user that is still in guild
+     * public void cleanupMessages(MessagePaginationAction action) {
+     *     action.forEachRemainingAsync(message -> {
      *         Guild guild = message.getGuild();
      *         if (!guild.isMember(message.getAuthor()))
      *             message.delete().queue();
@@ -485,11 +479,9 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * //deletes messages until it finds a user that is still in guild
-     * public void cleanupMessages(MessagePaginationAction action)
-     * {
-     *     action.forEachRemainingAsync( (message) ->
-     *     {
+     * // deletes messages until it finds a user that is still in guild
+     * public void cleanupMessages(MessagePaginationAction action) {
+     *     action.forEachRemainingAsync(message -> {
      *         Guild guild = message.getGuild();
      *         if (!guild.isMember(message.getAuthor()))
      *             message.delete().queue();

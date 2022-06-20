@@ -20,10 +20,9 @@ import net.vpg.rawf.api.requests.RateLimiter;
 import net.vpg.rawf.api.requests.RestRequest;
 import net.vpg.rawf.api.requests.RestResponse;
 import net.vpg.rawf.internal.requests.ratelimit.DefaultRateLimiter;
-import net.vpg.rawf.internal.utils.Checks;
-import net.vpg.rawf.internal.utils.Helpers;
-import net.vpg.rawf.internal.utils.JDALogger;
+import net.vpg.rawf.internal.utils.RAWFLogger;
 import net.vpg.rawf.internal.utils.config.AuthorizationConfig;
+import net.vpg.rawf.internal.utils.config.ConnectionConfig;
 import okhttp3.*;
 import okhttp3.internal.http.HttpMethod;
 import org.slf4j.Logger;
@@ -40,31 +39,24 @@ import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 
 public class Requester {
-    public static final Logger LOGGER = JDALogger.getLog(Requester.class);
-    public static final String DISCORD_API_PREFIX = Helpers.format("https://discord.com/api/v%d/"/*, JDAInfo.DISCORD_REST_VERSION*/);
-    public static final String USER_AGENT = "DiscordBot (" /*+ JDAInfo.GITHUB + ", " + JDAInfo.VERSION*/ + ")";
+    public static final Logger LOGGER = RAWFLogger.getLog(Requester.class);
     public static final RequestBody EMPTY_BODY = RequestBody.create(null, new byte[0]);
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
-    public static final MediaType MEDIA_TYPE_OCTET = MediaType.parse("application/octet-stream; charset=utf-8");
 
     protected final RestApi api;
-    protected final AuthorizationConfig authConfig;
-    private final RateLimiter rateLimiter;
+    protected final AuthorizationConfig authorizationConfig;
+    protected final ConnectionConfig connectionConfig;
+    protected final RateLimiter rateLimiter;
 
-    private final OkHttpClient httpClient;
-    private volatile boolean retryOnTimeout = false;
+    protected final OkHttpClient httpClient;
+    protected volatile boolean retryOnTimeout = false;
 
-    public Requester(RestApi api) {
-        this(api, null);
-    }
-
-    public Requester(RestApi api, AuthorizationConfig authConfig) {
-        Checks.notNull(authConfig, "Authorization Config");
-
-        this.authConfig = authConfig;
+    public Requester(RestApi api, AuthorizationConfig authorizationConfig, ConnectionConfig connectionConfig) {
         this.api = api;
+        this.authorizationConfig = authorizationConfig;
+        this.connectionConfig = connectionConfig;
         this.rateLimiter = new DefaultRateLimiter(this);
-        this.httpClient = /*this.api.getHttpClient()*/null;
+        this.httpClient = api.getHttpClient();
     }
 
     private static boolean isRetry(Throwable e) {
@@ -73,7 +65,7 @@ public class Requester {
             || e instanceof SSLPeerUnverifiedException; // SSL Certificate was wrong
     }
 
-    public RestApi getJDA() {
+    public RestApi getApi() {
         return api;
     }
 
@@ -115,7 +107,7 @@ public class Requester {
 
         Request.Builder builder = new Request.Builder();
 
-        String url = DISCORD_API_PREFIX + route.getCompiledRoute();
+        String url = connectionConfig.getBaseUrl() + route.getCompiledRoute();
         builder.url(url);
 
         String method = apiRequest.getRoute().getMethod().toString();
@@ -124,15 +116,13 @@ public class Requester {
         if (body == null && HttpMethod.requiresRequestBody(method))
             body = EMPTY_BODY;
 
-        builder.method(method, body);
-        builder.header("user-agent", USER_AGENT)
+        builder.method(method, body)
+            .header("user-agent", connectionConfig.getUserAgent())
             .header("accept-encoding", "gzip")
             .header("x-ratelimit-precision", "millisecond"); // still sending this in case of regressions
 
-        //adding token to all requests to the discord api or cdn pages
-        //we can check for startsWith(DISCORD_API_PREFIX) because the cdn endpoints don't need any kind of authorization
-        if (url.startsWith(DISCORD_API_PREFIX))
-            builder.header("authorization", authConfig.getToken());
+        if (route.getBaseRoute().isAuthorizationRequired())
+            builder.header("authorization", authorizationConfig.getToken());
 
         // Apply custom headers like X-Audit-Log-Reason
         // If customHeaders is null this does nothing
@@ -146,7 +136,7 @@ public class Requester {
         Set<String> rays = new LinkedHashSet<>();
         Response[] responses = new Response[4];
         // we have an array of all responses to later close them all at once
-        //the response below this comment is used as the first successful response from the server
+        // the response below this comment is used as the first successful response from the server
         Response lastResponse;
         try {
             LOGGER.trace("Executing request {} {}", apiRequest.getRoute().getMethod(), url);
@@ -170,7 +160,7 @@ public class Requester {
                     apiRequest.getRoute().getMethod(),
                     url, lastResponse.code(), attempt);
                 try {
-                    //noinspection BusyWait
+                    // noinspection BusyWait
                     Thread.sleep(50L * attempt);
                 } catch (InterruptedException ignored) {
                 }
@@ -179,7 +169,7 @@ public class Requester {
             LOGGER.trace("Finished Request {} {} with code {}", route.getMethod(), lastResponse.request().url(), lastResponse.code());
 
             if (lastResponse.code() >= 500) {
-                //Epic failure from other end. Attempted 4 times.
+                // Epic failure from other end. Attempted 4 times.
                 RestResponse response = new RestResponse(lastResponse, -1, rays);
                 apiRequest.handleResponse(response);
                 return 0L;

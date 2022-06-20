@@ -55,7 +55,7 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
 
     @Nonnull
     @Override
-    public RestApi getJDA() {
+    public RestApi getApi() {
         return api;
     }
 
@@ -146,8 +146,6 @@ public class DeferredRestAction<T, R extends RestAction<T>> implements RestActio
         action.setCheck(transitiveChecks);
         if (deadline >= 0)
             action.deadline(deadline);
-//        if (action instanceof AuditableRestAction && reason != null)
-//            ((AuditableRestAction<?>) action).reason(reason);
         return action;
     }
 }

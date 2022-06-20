@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Read-only view on internal JDA cache of items.
+ * Read-only view on internal cache of items.
  * <br>This can be useful to check information such as size without creating
  * an immutable snapshot first.
  *
@@ -56,9 +56,7 @@ import java.util.stream.StreamSupport;
 @ParametersAreNonnullByDefault
 public interface CacheView<T> extends Iterable<T> {
     /**
-     * Creates a combined {@link CacheView}
-     * for all provided CacheView implementations. This allows to combine cache of multiple
-     * JDA sessions or Guilds.
+     * Creates a combined {@link CacheView} for all provided CacheView implementations.
      *
      * @param cacheViews Collection of {@link CacheView} implementations
      * @param <E>        The target type of the projection
@@ -71,9 +69,7 @@ public interface CacheView<T> extends Iterable<T> {
     }
 
     /**
-     * Creates a combined {@link CacheView}
-     * for all provided CacheView implementations. This allows to combine cache of multiple
-     * JDA sessions or Guilds.
+     * Creates a combined {@link CacheView} for all provided CacheView implementations.
      *
      * @param generator Stream generator of {@link CacheView} implementations
      * @param <E>       The target type of the projection
@@ -263,46 +259,6 @@ public interface CacheView<T> extends Iterable<T> {
     default <R, A> R collect(Collector<? super T, A, R> collector) {
         return stream().collect(collector);
     }
-
-//    /**
-//     * Creates a combined {@link net.vpg.rawf.api.utils.cache.SnowflakeCacheView SnowflakeCacheView}
-//     * for all provided SnowflakeCacheView implementations.
-//     * <br>This allows to combine cache of multiple JDA sessions or Guilds.
-//     *
-//     * @param  cacheViews
-//     *         Collection of {@link net.vpg.rawf.api.utils.cache.SnowflakeCacheView SnowflakeCacheView} implementations
-//     *
-//     * @param  <E>
-//     *         The target type of the chain
-//     *
-//     * @return Combined SnowflakeCacheView spanning over all provided implementation instances
-//     */
-//    @Nonnull
-//    static <E extends ISnowflake> SnowflakeCacheView<E> allSnowflakes(Collection<? extends SnowflakeCacheView<E>> cacheViews)
-//    {
-//        Checks.noneNull(cacheViews, "Collection");
-//        return new UnifiedCacheViewImpl.UnifiedSnowflakeCacheView<>(cacheViews::stream);
-//    }
-//
-//    /**
-//     * Creates a combined {@link net.vpg.rawf.api.utils.cache.SnowflakeCacheView SnowflakeCacheView}
-//     * for all provided SnowflakeCacheView implementations.
-//     * <br>This allows to combine cache of multiple JDA sessions or Guilds.
-//     *
-//     * @param  generator
-//     *         Stream generator of {@link net.vpg.rawf.api.utils.cache.SnowflakeCacheView SnowflakeCacheView} implementations
-//     *
-//     * @param  <E>
-//     *         The target type of the chain
-//     *
-//     * @return Combined SnowflakeCacheView spanning over all provided implementation instances
-//     */
-//    @Nonnull
-//    static <E extends ISnowflake> SnowflakeCacheView<E> allSnowflakes(Supplier<? extends Stream<? extends SnowflakeCacheView<E>>> generator)
-//    {
-//        Checks.notNull(generator, "Generator");
-//        return new UnifiedCacheViewImpl.UnifiedSnowflakeCacheView<>(generator);
-//    }
 
     /**
      * Basic implementation of {@link CacheView} interface.
