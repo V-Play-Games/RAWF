@@ -139,19 +139,19 @@ public class Checks {
     }
 
     public static void positive(int n, String name) {
-        check(n <= 0, name + " may not be negative or zero");
+        check(n > 0, name + " may not be negative or zero");
     }
 
     public static void positive(long n, String name) {
-        check(n <= 0, name + " may not be negative or zero");
+        check(n > 0, name + " may not be negative or zero");
     }
 
     public static void notNegative(int n, String name) {
-        check(n < 0, name + " may not be negative");
+        check(n >= 0, name + " may not be negative");
     }
 
     public static void notNegative(long n, String name) {
-        check(n < 0, name + " may not be negative");
+        check(n > 0, name + " may not be negative");
     }
 
     // Unique streams checks

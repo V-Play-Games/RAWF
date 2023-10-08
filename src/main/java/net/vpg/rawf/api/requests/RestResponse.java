@@ -17,9 +17,9 @@ package net.vpg.rawf.api.requests;
 
 import net.vpg.rawf.api.exceptions.ParsingException;
 import net.vpg.rawf.api.utils.IOFunction;
-import net.vpg.rawf.api.utils.data.DataArray;
-import net.vpg.rawf.api.utils.data.DataObject;
 import net.vpg.rawf.internal.utils.IOUtil;
+import net.vpg.vjson.value.JSONArray;
+import net.vpg.vjson.value.JSONObject;
 import okhttp3.Response;
 
 import javax.annotation.Nonnull;
@@ -79,23 +79,23 @@ public class RestResponse implements Closeable {
     }
 
     @Nonnull
-    public DataArray getArray() {
-        return get(DataArray.class, DataArray::fromJson);
+    public JSONArray getArray() {
+        return get(JSONArray.class, JSONArray::parse);
     }
 
     @Nonnull
-    public Optional<DataArray> optArray() {
-        return parseBody(true, DataArray.class, DataArray::fromJson);
+    public Optional<JSONArray> optArray() {
+        return parseBody(true, JSONArray.class, JSONArray::parse);
     }
 
     @Nonnull
-    public DataObject getObject() {
-        return get(DataObject.class, DataObject::fromJson);
+    public JSONObject getObject() {
+        return get(JSONObject.class, JSONObject::parse);
     }
 
     @Nonnull
-    public Optional<DataObject> optObject() {
-        return parseBody(true, DataObject.class, DataObject::fromJson);
+    public Optional<JSONObject> optObject() {
+        return parseBody(true, JSONObject.class, JSONObject::parse);
     }
 
     @Nonnull

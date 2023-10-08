@@ -18,11 +18,11 @@ package net.vpg.rawf.api.exceptions;
 import net.vpg.rawf.api.requests.ErrorResponse;
 import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.api.requests.RestResponse;
-import net.vpg.rawf.api.utils.data.DataArray;
-import net.vpg.rawf.api.utils.data.DataObject;
 import net.vpg.rawf.internal.utils.Checks;
 import net.vpg.rawf.internal.utils.Helpers;
 import net.vpg.rawf.internal.utils.RAWFLogger;
+import net.vpg.vjson.value.JSONObject;
+import net.vpg.vjson.value.JSONValue;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 
@@ -74,7 +74,7 @@ public class ErrorResponseException extends RuntimeException {
         int code = errorResponse.getCode();
         List<SchemaError> schemaErrors = new ArrayList<>();
         try {
-            Optional<DataObject> optObj = response.optObject();
+            Optional<JSONObject> optObj = response.optObject();
             if (response.isError() && response.getException() != null) {
                 // this generally means that an exception occurred trying to
                 // make an http request. e.g.:
@@ -82,7 +82,7 @@ public class ErrorResponseException extends RuntimeException {
                 code = response.code;
                 meaning = response.getException().getClass().getName();
             } else if (optObj.isPresent()) {
-                DataObject obj = optObj.get();
+                JSONObject obj = optObj.get();
                 if (!obj.isNull("code") || !obj.isNull("message")) {
                     if (!obj.isNull("code"))
                         code = obj.getInt("code");
@@ -108,23 +108,23 @@ public class ErrorResponseException extends RuntimeException {
         return new ErrorResponseException(errorResponse, response, code, meaning, schemaErrors);
     }
 
-    private static void parseSchema(List<SchemaError> schemaErrors, String currentLocation, DataObject errors) {
+    private static void parseSchema(List<SchemaError> schemaErrors, String currentLocation, JSONObject errors) {
         // check what kind of errors we are dealing with
-        for (String name : errors.keys()) {
+        for (String name : errors.toMap().keySet()) {
             if (name.equals("_errors")) {
                 schemaErrors.add(parseSchemaError(currentLocation, errors));
                 continue;
             }
-            DataObject schemaError = errors.getObject(name);
+            JSONObject schemaError = errors.getObject(name);
             if (!schemaError.isNull("_errors")) {
                 // We are dealing with an Object Error
                 schemaErrors.add(parseSchemaError(currentLocation + name, schemaError));
-            } else if (schemaError.keys().stream().allMatch(Helpers::isNumeric)) {
+            } else if (schemaError.toMap().keySet().stream().allMatch(Helpers::isNumeric)) {
                 // We have an Array Error
-                for (String index : schemaError.keys()) {
-                    DataObject properties = schemaError.getObject(index);
+                for (String index : schemaError.toMap().keySet()) {
+                    JSONObject properties = schemaError.getObject(index);
                     String location = Helpers.format("%s%s[%s].", currentLocation, name, index);
-                    if (properties.hasKey("_errors"))
+                    if (!properties.isNull("_errors"))
                         schemaErrors.add(parseSchemaError(location.substring(0, location.length() - 1), properties));
                     else
                         parseSchema(schemaErrors, location, properties);
@@ -137,9 +137,10 @@ public class ErrorResponseException extends RuntimeException {
         }
     }
 
-    private static SchemaError parseSchemaError(String location, DataObject obj) {
+    private static SchemaError parseSchemaError(String location, JSONObject obj) {
         List<ErrorCode> codes = obj.getArray("_errors")
-            .stream(DataArray::getObject)
+            .stream()
+            .map(JSONValue::toObject)
             .map(json -> new ErrorCode(json.getString("code"), json.getString("message")))
             .collect(Collectors.toList());
         return new SchemaError(location, codes);

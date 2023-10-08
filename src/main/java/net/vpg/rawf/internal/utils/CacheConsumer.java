@@ -15,9 +15,9 @@
  */
 package net.vpg.rawf.internal.utils;
 
-import net.vpg.rawf.api.utils.data.DataObject;
+import net.vpg.vjson.value.JSONObject;
 
 @FunctionalInterface
 public interface CacheConsumer {
-    void execute(long responseTotal, DataObject allContent);
+    void execute(long responseTotal, JSONObject allContent);
 }

@@ -22,11 +22,11 @@ import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.api.requests.RestFuture;
 import net.vpg.rawf.api.requests.RestRequest;
 import net.vpg.rawf.api.requests.RestResponse;
-import net.vpg.rawf.api.utils.data.DataArray;
-import net.vpg.rawf.api.utils.data.DataObject;
 import net.vpg.rawf.internal.utils.Checks;
 import net.vpg.rawf.internal.utils.Helpers;
 import net.vpg.rawf.internal.utils.RAWFLogger;
+import net.vpg.vjson.value.JSONArray;
+import net.vpg.vjson.value.JSONObject;
 import okhttp3.RequestBody;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.slf4j.Logger;
@@ -43,15 +43,16 @@ public class RestActionImpl<T> implements RestAction<T> {
     protected static boolean passContext = true;
     protected static long defaultTimeout = 0;
     private static Consumer<Object> DEFAULT_SUCCESS = Helpers.emptyConsumer();
-    private static Consumer<? super Throwable> DEFAULT_FAILURE = (Consumer<Throwable>) t -> {
+    private static Consumer<? super Throwable> DEFAULT_FAILURE = t -> {
+        String message = t.getMessage();
         if (t instanceof CancellationException || t instanceof TimeoutException)
-            LOG.debug(t.getMessage());
+            LOG.debug(message);
         else if (LOG.isDebugEnabled() || !(t instanceof ErrorResponseException))
             LOG.error("RestAction queue returned failure", t);
         else if (t.getCause() != null)
-            LOG.error("RestAction queue returned failure: [{}] {}", t.getClass().getSimpleName(), t.getMessage(), t.getCause());
+            LOG.error("RestAction queue returned failure: [{}] {}", t.getClass().getSimpleName(), message, t.getCause());
         else
-            LOG.error("RestAction queue returned failure: [{}] {}", t.getClass().getSimpleName(), t.getMessage());
+            LOG.error("RestAction queue returned failure: [{}] {}", t.getClass().getSimpleName(), message);
     };
 
     protected final RestApi api;
@@ -61,14 +62,14 @@ public class RestActionImpl<T> implements RestAction<T> {
 
     private boolean priority = false;
     private long deadline = 0;
-    private Object rawData;
+    private Object raw;
     private BooleanSupplier checks;
 
     public RestActionImpl(RestApi api, Route.CompiledRoute route) {
         this(api, route, (RequestBody) null, null);
     }
 
-    public RestActionImpl(RestApi api, Route.CompiledRoute route, DataObject data) {
+    public RestActionImpl(RestApi api, Route.CompiledRoute route, JSONObject data) {
         this(api, route, data, null);
     }
 
@@ -80,9 +81,9 @@ public class RestActionImpl<T> implements RestAction<T> {
         this(api, route, (RequestBody) null, handler);
     }
 
-    public RestActionImpl(RestApi api, Route.CompiledRoute route, DataObject data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
-        this(api, route, data == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, data.toJson()), handler);
-        this.rawData = data;
+    public RestActionImpl(RestApi api, Route.CompiledRoute route, JSONObject data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
+        this(api, route, data == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, data.deserialize()), handler);
+        this.raw = data;
     }
 
     public RestActionImpl(RestApi api, Route.CompiledRoute route, RequestBody data, BiFunction<RestResponse, RestRequest<T>, T> handler) {
@@ -162,14 +163,14 @@ public class RestActionImpl<T> implements RestAction<T> {
     public void queue(Consumer<? super T> success, Consumer<? super Throwable> failure) {
         Route.CompiledRoute route = finalizeRoute();
         Checks.notNull(route, "Route");
-        RequestBody data = finalizeData();
+        RequestBody data = finalizeJSON();
         CaseInsensitiveMap<String, String> headers = finalizeHeaders();
         BooleanSupplier finisher = getFinisher();
         if (success == null)
             success = DEFAULT_SUCCESS;
         if (failure == null)
             failure = DEFAULT_FAILURE;
-        api.getRequester().request(new RestRequest<>(this, success, failure, finisher, true, data, rawData, getDeadline(), priority, route, headers));
+        api.getRequester().request(new RestRequest<>(this, success, failure, finisher, true, data, raw, getDeadline(), priority, route, headers));
     }
 
     @Nonnull
@@ -177,10 +178,10 @@ public class RestActionImpl<T> implements RestAction<T> {
     public CompletableFuture<T> submit(boolean shouldQueue) {
         Route.CompiledRoute route = finalizeRoute();
         Checks.notNull(route, "Route");
-        RequestBody data = finalizeData();
+        RequestBody data = finalizeJSON();
         CaseInsensitiveMap<String, String> headers = finalizeHeaders();
         BooleanSupplier finisher = getFinisher();
-        return new RestFuture<>(this, shouldQueue, finisher, data, rawData, getDeadline(), priority, route, headers);
+        return new RestFuture<>(this, shouldQueue, finisher, data, raw, getDeadline(), priority, route, headers);
     }
 
     @Override
@@ -203,7 +204,7 @@ public class RestActionImpl<T> implements RestAction<T> {
         }
     }
 
-    protected RequestBody finalizeData() {
+    protected RequestBody finalizeJSON() {
         return data;
     }
 
@@ -219,16 +220,16 @@ public class RestActionImpl<T> implements RestAction<T> {
         return null;
     }
 
-    protected RequestBody getRequestBody(DataObject object) {
-        this.rawData = object;
+    protected RequestBody getRequestBody(JSONObject object) {
+        this.raw = object;
 
-        return object == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, object.toJson());
+        return object == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, object.deserialize());
     }
 
-    protected RequestBody getRequestBody(DataArray array) {
-        this.rawData = array;
+    protected RequestBody getRequestBody(JSONArray array) {
+        this.raw = array;
 
-        return array == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, array.toJson());
+        return array == null ? null : RequestBody.create(Requester.MEDIA_TYPE_JSON, array.deserialize());
     }
 
     private CheckWrapper getFinisher() {
