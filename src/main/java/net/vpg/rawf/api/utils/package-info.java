@@ -15,8 +15,6 @@
  */
 /**
  * Package which contains all utilities for the RAWF library.
- * These are used by JDA itself and can also be useful for the library user!
- * {@link net.vpg.rawf.api.utils.MiscUtil MiscUtil}
- * <br>Various operations that don't have specific utility classes yet, mostly internals that are accessible from JDA entities</li>
+ * These are used by the library itself and can also be useful for the library user!
  */
 package net.vpg.rawf.api.utils;

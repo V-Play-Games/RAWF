@@ -76,7 +76,7 @@ public class ErrorHandler implements Consumer<Throwable> {
     /**
      * Ignore the specified set of error responses.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * // Creates a message with the provided content and deletes it 30 seconds later
      * public static void selfDestruct(MessageChannel channel, String content) {
@@ -100,7 +100,7 @@ public class ErrorHandler implements Consumer<Throwable> {
     /**
      * Ignore the specified set of error responses.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * // Creates a message with the provided content and deletes it 30 seconds later
      * public static void selfDestruct(User user, String content) {
@@ -124,7 +124,7 @@ public class ErrorHandler implements Consumer<Throwable> {
     /**
      * Ignore exceptions of the specified types.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * // Ignore SocketTimeoutException
      * public static void ban(Guild guild, String userId) {
@@ -146,7 +146,7 @@ public class ErrorHandler implements Consumer<Throwable> {
     /**
      * Ignore exceptions on specific conditions.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * // Ignore all exceptions except for HttpException
      * public static void ban(Guild guild, String userId) {
@@ -168,7 +168,7 @@ public class ErrorHandler implements Consumer<Throwable> {
      * Handle specific {@link HttpException HttpExceptions}.
      * <br>This will apply the specified handler to use instead of the base consumer if one of the provided HttpExceptions happens.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * public static void sendMessage(TextChannel context, User user, String content) {
      *     user.openPrivateChannel()
@@ -194,7 +194,7 @@ public class ErrorHandler implements Consumer<Throwable> {
      * Handle specific {@link HttpException HttpExceptions}.
      * <br>This will apply the specified handler to use instead of the base consumer if one of the provided HttpExceptions happens.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * public static void sendMessage(TextChannel context, User user, String content) {
      *     user.openPrivateChannel()
@@ -221,7 +221,7 @@ public class ErrorHandler implements Consumer<Throwable> {
      * Handle specific throwable types.
      * <br>This will apply the specified handler if the throwable is of the specified type. The check is done using {@link Class#isInstance(Object)}.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * public static void logHttpException(RestAction<?> action) {
      *     action.queue(null, new ErrorHandler()
@@ -246,7 +246,7 @@ public class ErrorHandler implements Consumer<Throwable> {
      * Handle specific throwable types.
      * <br>This will apply the specified handler if the throwable is of the specified type. The check is done using {@link Class#isInstance(Object)}.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * public static void logHttpException(RestAction<?> action) {
      *     action.queue(null, new ErrorHandler()
@@ -275,7 +275,7 @@ public class ErrorHandler implements Consumer<Throwable> {
      * Handle specific throwable types.
      * <br>This will apply the specified handler if the throwable is of the specified type. The check is done using {@link Class#isInstance(Object)}.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * public static void logHttpException(RestAction<?> action) {
      *     action.queue(null, new ErrorHandler()
@@ -302,7 +302,7 @@ public class ErrorHandler implements Consumer<Throwable> {
     /**
      * Handle specific conditions.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * public static void logHttpException(RestAction<?> action) {
      *     action.queue(null, new ErrorHandler()

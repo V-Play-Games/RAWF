@@ -14,25 +14,6 @@
  * limitations under the License.
  */
 /**
- * The API features of JDA.
- *
- * <p>This package contains information about the JDA version used by this library.
- * See {@link net.vpg.rawf.api.JDAInfo JDAInfo}!
- *
- * <p>You can use {@link net.vpg.rawf.api.JDABuilder JDABuilder} to create a {@link net.vpg.rawf.api.JDA JDA} instance.
- * <br>Each JDA instance represents a connection to discord to receive events.
- *
- * <p>In addition this package included helpful builders for message sending
- * such as:
- * <ul>
- *     <li>{@link net.vpg.rawf.api.MessageBuilder MessageBuilder}
- *     <br>Used to build a {@link net.vpg.rawf.api.entities.Message Message} which can be used to
- *         send a message to a {@link net.vpg.rawf.api.entities.MessageChannel MessageChannel} together with
- *         a {@link net.vpg.rawf.api.entities.MessageEmbed MessageEmbed} and Text-To-Speech!</li>
- *
- *     <li>{@link net.vpg.rawf.api.EmbedBuilder EmbedBuilder}
- *     <br>Used to build a {@link net.vpg.rawf.api.entities.MessageEmbed MessageEmbed}
- *         which can then be used in the message sending process (see above)</li>
- * </ul>
+ * The API features of RAWF.
  */
 package net.vpg.rawf.api;

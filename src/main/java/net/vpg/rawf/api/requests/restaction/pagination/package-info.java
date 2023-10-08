@@ -15,7 +15,7 @@
  */
 /**
  * Extensions of {@link net.vpg.rawf.api.requests.RestAction RestAction} that allow
- * to access paginated discord endpoints like the message history of a {@link net.vpg.rawf.api.entities.MessageChannel MessageChannel}.
+ * to access paginated endpoints.
  * <br>The {@link net.vpg.rawf.api.requests.restaction.pagination.PaginationAction PaginationAction} is designed to work
  * as an {@link java.lang.Iterable} of the specified endpoint. Each implementation specifies the endpoints it will
  * use in the class-level javadoc.

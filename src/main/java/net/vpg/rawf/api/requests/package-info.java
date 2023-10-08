@@ -20,7 +20,6 @@
  * to specify how the Requester should deal with rate limits.
  * It has extensions with additional functionalities in {@link net.vpg.rawf.api.requests.restaction}.
  *
- * <p>In the case of a failed Request the RestAction will be provided with an {@link net.vpg.rawf.api.exceptions.ErrorResponseException ErrorResponseException}
- * which contains a {@link net.vpg.rawf.api.requests.ErrorResponse ErrorResponse} representing the failure cause!
+ * <p>In the case of a failed Request the RestAction will be provided with an {@link net.vpg.rawf.api.exceptions.HttpException HttpException}.
  */
 package net.vpg.rawf.api.requests;

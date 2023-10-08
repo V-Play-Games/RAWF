@@ -90,7 +90,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      *
      * <p>Fails if cache is enabled and the target id is newer than the current last id {@literal (id > last)}.
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * public MessagePaginationAction getOlderThan(MessageChannel channel, long time) {
      *     long timestamp = TimeUtil.getDiscordTimestamp(time);
@@ -376,7 +376,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <p><b>This iteration will include already cached entities, in order to exclude cached
      * entities use {@link #forEachRemainingAsync(Procedure)}</b>
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * // deletes messages until it finds a user that is still in guild
      * public void cleanupMessages(MessagePaginationAction action) {
@@ -410,7 +410,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <p><b>This iteration will include already cached entities, in order to exclude cached
      * entities use {@link #forEachRemainingAsync(Procedure, Consumer)}</b>
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * // deletes messages until it finds a user that is still in guild
      * public void cleanupMessages(MessagePaginationAction action) {
@@ -443,7 +443,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <p><b>This iteration will exclude already cached entities, in order to include cached
      * entities use {@link #forEachAsync(Procedure)}</b>
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * // deletes messages until it finds a user that is still in guild
      * public void cleanupMessages(MessagePaginationAction action) {
@@ -477,7 +477,7 @@ public interface PaginationAction<T, M extends PaginationAction<T, M>> extends R
      * <p><b>This iteration will exclude already cached entities, in order to include cached
      * entities use {@link #forEachAsync(Procedure, Consumer)}</b>
      *
-     * <h4>Example</h4>
+     * <p><b>Example</b><br>
      * <pre>{@code
      * // deletes messages until it finds a user that is still in guild
      * public void cleanupMessages(MessagePaginationAction action) {
