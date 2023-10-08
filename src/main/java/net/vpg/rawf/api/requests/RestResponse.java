@@ -15,9 +15,9 @@
  */
 package net.vpg.rawf.api.requests;
 
-import net.vpg.rawf.api.exceptions.ParsingException;
 import net.vpg.rawf.api.utils.IOFunction;
 import net.vpg.rawf.internal.utils.IOUtil;
+import net.vpg.vjson.parser.ParseException;
 import net.vpg.vjson.value.JSONArray;
 import net.vpg.vjson.value.JSONObject;
 import okhttp3.Response;
@@ -182,7 +182,7 @@ public class RestResponse implements Closeable {
                 reader.close();
             } catch (NullPointerException | IOException ignored) {
             }
-            if (opt && e instanceof ParsingException)
+            if (opt && e instanceof ParseException)
                 return Optional.empty();
             else
                 throw new IllegalStateException("An error occurred while parsing the response for a RestAction", e);

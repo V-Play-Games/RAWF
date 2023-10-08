@@ -205,8 +205,8 @@ public class ErrorHandler implements Consumer<Throwable> {
      * }
      * }</pre>
      *
-     * @param http The {@link HttpException HttpExceptions} to match
-     * @param handler        The alternative handler
+     * @param http    The {@link HttpException HttpExceptions} to match
+     * @param handler The alternative handler
      * @return This ErrorHandler with the applied handler
      * @throws IllegalArgumentException If provided with null
      */
