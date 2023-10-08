@@ -16,7 +16,6 @@
 package net.vpg.rawf.internal.requests;
 
 import net.vpg.rawf.api.RestApi;
-import net.vpg.rawf.api.exceptions.ErrorResponseException;
 import net.vpg.rawf.api.exceptions.RateLimitedException;
 import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.api.requests.RestFuture;
@@ -47,10 +46,6 @@ public class RestActionImpl<T> implements RestAction<T> {
         String message = t.getMessage();
         if (t instanceof CancellationException || t instanceof TimeoutException)
             LOG.debug(message);
-        else if (LOG.isDebugEnabled() || !(t instanceof ErrorResponseException))
-            LOG.error("RestAction queue returned failure", t);
-        else if (t.getCause() != null)
-            LOG.error("RestAction queue returned failure: [{}] {}", t.getClass().getSimpleName(), message, t.getCause());
         else
             LOG.error("RestAction queue returned failure: [{}] {}", t.getClass().getSimpleName(), message);
     };
@@ -193,7 +188,7 @@ public class RestActionImpl<T> implements RestAction<T> {
         } catch (CompletionException e) {
             if (e.getCause() != null) {
                 Throwable cause = e.getCause();
-                if (cause instanceof ErrorResponseException || cause instanceof RateLimitedException)
+                if (cause instanceof RateLimitedException)
                     cause.fillInStackTrace(); // this method will update the stacktrace to the current thread stack
                 if (cause instanceof RuntimeException)
                     throw (RuntimeException) cause;

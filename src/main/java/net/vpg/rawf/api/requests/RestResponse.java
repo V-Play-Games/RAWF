@@ -139,7 +139,7 @@ public class RestResponse implements Closeable {
     public String toString() {
         return this.exception == null
             ? "HTTPResponse[" + this.code + (this.object == null ? "" : ", " + this.object.toString()) + ']'
-            : "HTTPException[" + this.exception.getMessage() + ']';
+            : "HttpException[" + this.exception.getMessage() + ']';
     }
 
     @Override

@@ -15,7 +15,6 @@
  */
 package net.vpg.rawf.api.exceptions;
 
-import net.vpg.rawf.api.requests.ErrorResponse;
 import net.vpg.rawf.api.requests.RestAction;
 import net.vpg.rawf.internal.utils.Checks;
 import net.vpg.rawf.internal.utils.Helpers;
@@ -28,7 +27,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Utility class to simplify error handling with {@link RestAction RestActions} and {@link ErrorResponse ErrorResponses}.
+ * Utility class to simplify exception handling with {@link RestAction RestActions} and {@link HttpException}.
  *
  * <h2>Example</h2>
  * <pre>{@code
@@ -39,15 +38,14 @@ import java.util.function.Predicate;
  *         .delay(Duration.ofSeconds(30))
  *         .flatMap(Message::delete) // delete after 30 seconds
  *         .queue(null, new ErrorHandler()
- *             .ignore(ErrorResponse.UNKNOWN_MESSAGE) // if delete fails that's fine
+ *             .ignore(HttpException.UNKNOWN_MESSAGE) // if delete fails that's fine
  *             .handle(
- *                 ErrorResponse.CANNOT_SEND_TO_USER,  // Fallback handling for blocked messages
+ *                 HttpException.CANNOT_SEND_TO_USER,  // Fallback handling for blocked messages
  *                 (e) -> context.sendMessage("Failed to send message, you block private messages!").queue()));
  * }
  * }</pre>
  *
- * @see ErrorResponse
- * @see ErrorResponseException
+ * @see HttpException
  * @see RestAction#queue(Consumer, Consumer)
  * @since 4.2.0
  */
@@ -89,14 +87,14 @@ public class ErrorHandler implements Consumer<Throwable> {
      * }
      * }</pre>
      *
-     * @param errorResponses Error responses to ignore
+     * @param http Error responses to ignore
      * @return This ErrorHandler with the applied ignore cases
      * @throws IllegalArgumentException If provided with null
      */
     @Nonnull
-    public ErrorHandler ignore(ErrorResponse... errorResponses) {
-        Checks.noneNull(errorResponses, "ErrorResponse");
-        return ignore(Set.of(errorResponses));
+    public ErrorHandler ignore(HttpException... http) {
+        Checks.noneNull(http, "HttpException");
+        return ignore(Set.of(http));
     }
 
     /**
@@ -114,13 +112,13 @@ public class ErrorHandler implements Consumer<Throwable> {
      * }
      * }</pre>
      *
-     * @param errorResponses The error responses to ignore
+     * @param http The error responses to ignore
      * @return This ErrorHandler with the applied ignore cases
      * @throws IllegalArgumentException If provided with null
      */
     @Nonnull
-    public ErrorHandler ignore(Collection<ErrorResponse> errorResponses) {
-        return handle(errorResponses, Helpers.emptyConsumer());
+    public ErrorHandler ignore(Collection<HttpException> http) {
+        return handle(http, Helpers.emptyConsumer());
     }
 
     /**
@@ -134,25 +132,15 @@ public class ErrorHandler implements Consumer<Throwable> {
      * }
      * }</pre>
      *
-     * @param clazz   The class to ignore
-     * @param classes Additional classes to ignore
+     * @param classes The classes to ignore
      * @return This ErrorHandler with the applied ignore case
      * @throws IllegalArgumentException If provided with null
      * @see java.net.SocketTimeoutException
      */
     @Nonnull
-    public ErrorHandler ignore(Class<?> clazz, Class<?>... classes) {
-        Checks.notNull(clazz, "Classes");
+    public ErrorHandler ignore(Class<?>... classes) {
         Checks.noneNull(classes, "Classes");
-        return ignore(it -> {
-            if (clazz.isInstance(it))
-                return true;
-            for (Class<?> e : classes) {
-                if (e.isInstance(it))
-                    return true;
-            }
-            return false;
-        });
+        return ignore(it -> Arrays.stream(classes).anyMatch(e -> e.isAssignableFrom(it.getClass())));
     }
 
     /**
@@ -160,16 +148,16 @@ public class ErrorHandler implements Consumer<Throwable> {
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * // Ignore all exceptions except for ErrorResponseException
+     * // Ignore all exceptions except for HttpException
      * public static void ban(Guild guild, String userId) {
-     *     guild.ban(userId).queue(null, new ErrorHandler().ignore((ex) -> !(ex instanceof ErrorResponseException));
+     *     guild.ban(userId).queue(null, new ErrorHandler().ignore((ex) -> !(ex instanceof HttpException));
      * }
      * }</pre>
      *
      * @param condition The condition to check
      * @return This ErrorHandler with the applied ignore case
      * @throws IllegalArgumentException If provided with null
-     * @see ErrorResponseException
+     * @see HttpException
      */
     @Nonnull
     public ErrorHandler ignore(Predicate<? super Throwable> condition) {
@@ -177,8 +165,8 @@ public class ErrorHandler implements Consumer<Throwable> {
     }
 
     /**
-     * Handle specific {@link ErrorResponse ErrorResponses}.
-     * <br>This will apply the specified handler to use instead of the base consumer if one of the provided ErrorResponses happens.
+     * Handle specific {@link HttpException HttpExceptions}.
+     * <br>This will apply the specified handler to use instead of the base consumer if one of the provided HttpExceptions happens.
      *
      * <h4>Example</h4>
      * <pre>{@code
@@ -186,25 +174,25 @@ public class ErrorHandler implements Consumer<Throwable> {
      *     user.openPrivateChannel()
      *         .flatMap(channel -> channel.sendMessage(content))
      *         .queue(null, new ErrorHandler()
-     *             .handle(ErrorResponse.CANNOT_SEND_TO_USER,
+     *             .handle(HttpException.CANNOT_SEND_TO_USER,
      *                 (ex) -> context.sendMessage("Cannot send direct message, please enable direct messages from server members!").queue()));
      * }
      * }</pre>
      *
-     * @param response The first {@link ErrorResponse} to match
+     * @param response The first {@link HttpException} to match
      * @param handler  The alternative handler
      * @return This ErrorHandler with the applied handler
      * @throws IllegalArgumentException If provided with null
      */
     @Nonnull
-    public ErrorHandler handle(ErrorResponse response, Consumer<? super ErrorResponseException> handler) {
-        Checks.notNull(response, "ErrorResponse");
+    public ErrorHandler handle(HttpException response, Consumer<? super HttpException> handler) {
+        Checks.notNull(response, "HttpException");
         return handle(Set.of(response), handler);
     }
 
     /**
-     * Handle specific {@link ErrorResponse ErrorResponses}.
-     * <br>This will apply the specified handler to use instead of the base consumer if one of the provided ErrorResponses happens.
+     * Handle specific {@link HttpException HttpExceptions}.
+     * <br>This will apply the specified handler to use instead of the base consumer if one of the provided HttpExceptions happens.
      *
      * <h4>Example</h4>
      * <pre>{@code
@@ -212,21 +200,21 @@ public class ErrorHandler implements Consumer<Throwable> {
      *     user.openPrivateChannel()
      *         .flatMap(channel -> channel.sendMessage(content))
      *         .queue(null, new ErrorHandler()
-     *             .handle(EnumSet.of(ErrorResponse.CANNOT_SEND_TO_USER),
+     *             .handle(EnumSet.of(HttpException.CANNOT_SEND_TO_USER),
      *                 (ex) -> context.sendMessage("Cannot send direct message, please enable direct messages from server members!").queue()));
      * }
      * }</pre>
      *
-     * @param errorResponses The {@link ErrorResponse ErrorResponses} to match
+     * @param http The {@link HttpException HttpExceptions} to match
      * @param handler        The alternative handler
      * @return This ErrorHandler with the applied handler
      * @throws IllegalArgumentException If provided with null
      */
     @Nonnull
-    public ErrorHandler handle(Collection<ErrorResponse> errorResponses, Consumer<? super ErrorResponseException> handler) {
+    public ErrorHandler handle(Collection<HttpException> http, Consumer<? super HttpException> handler) {
         Checks.notNull(handler, "Handler");
-        Checks.noneNull(errorResponses, "ErrorResponse");
-        return handle(ErrorResponseException.class, it -> errorResponses.contains(it.getErrorResponse()), handler);
+        Checks.noneNull(http, "HttpException");
+        return handle(HttpException.class, http::contains, handler);
     }
 
     /**
@@ -235,10 +223,10 @@ public class ErrorHandler implements Consumer<Throwable> {
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * public static void logErrorResponse(RestAction<?> action) {
+     * public static void logHttpException(RestAction<?> action) {
      *     action.queue(null, new ErrorHandler()
-     *         .handle(ErrorResponseException.class,
-     *             (ex) -> System.out.println(ex.getErrorResponse())));
+     *         .handle(HttpException.class,
+     *             (ex) -> System.out.println(ex.getHttpException())));
      * }
      * }</pre>
      *
@@ -260,10 +248,10 @@ public class ErrorHandler implements Consumer<Throwable> {
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * public static void logErrorResponse(RestAction<?> action) {
+     * public static void logHttpException(RestAction<?> action) {
      *     action.queue(null, new ErrorHandler()
-     *         .handle(ErrorResponseException.class,
-     *             ErrorResponseException::isServerError,
+     *         .handle(HttpException.class,
+     *             HttpException::isServerError,
      *             (ex) -> System.out.println(ex.getErrorCode() + ": " + ex.getMeaning())));
      * }
      * }</pre>
@@ -289,7 +277,7 @@ public class ErrorHandler implements Consumer<Throwable> {
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * public static void logErrorResponse(RestAction<?> action) {
+     * public static void logHttpException(RestAction<?> action) {
      *     action.queue(null, new ErrorHandler()
      *         .handle(Arrays.asList(Throwable.class),
      *             (ex) -> ex instanceof Error,
@@ -316,10 +304,10 @@ public class ErrorHandler implements Consumer<Throwable> {
      *
      * <h4>Example</h4>
      * <pre>{@code
-     * public static void logErrorResponse(RestAction<?> action) {
+     * public static void logHttpException(RestAction<?> action) {
      *     action.queue(null, new ErrorHandler()
      *         .handle(
-     *             (ex) -> !(ex instanceof ErrorResponseException),
+     *             (ex) -> !(ex instanceof HttpException),
      *             Throwable::printStackTrace));
      * }
      * }</pre>
@@ -338,14 +326,10 @@ public class ErrorHandler implements Consumer<Throwable> {
 
     @Override
     public void accept(Throwable t) {
-        for (Map.Entry<Predicate<? super Throwable>, Consumer<? super Throwable>> entry : cases.entrySet()) {
-            Predicate<? super Throwable> condition = entry.getKey();
-            Consumer<? super Throwable> callback = entry.getValue();
-            if (condition.test(t)) {
+        cases.forEach((condition, callback) -> {
+            if (condition.test(t))
                 callback.accept(t);
-                return;
-            }
-        }
+        });
 
         base.accept(t);
     }

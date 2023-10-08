@@ -147,7 +147,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> The generic response type for this RestAction
  * @see net.vpg.rawf.api.exceptions.ErrorHandler
- * @see net.vpg.rawf.api.exceptions.ErrorResponseException
+ * @see net.vpg.rawf.api.exceptions.HttpException
  * @since 3.0
  */
 @ParametersAreNonnullByDefault
@@ -452,7 +452,7 @@ public interface RestAction<T> {
      * }
      * }</pre>
      *
-     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
+     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown
      * @see #queue(java.util.function.Consumer) queue(Consumer)
      * @see #queue(java.util.function.Consumer, java.util.function.Consumer) queue(Consumer, Consumer)
      */
@@ -482,7 +482,6 @@ public interface RestAction<T> {
      *
      * @param success The success callback that will be called at a convenient time
      *                for the API. (can be null)
-     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
      * @see #queue(java.util.function.Consumer, java.util.function.Consumer) queue(Consumer, Consumer)
      */
     default void queue(@Nullable Consumer<? super T> success) {
@@ -517,7 +516,6 @@ public interface RestAction<T> {
      *                for the API. (can be null to use default)
      * @param failure The failure callback that will be called if the Request
      *                encounters an exception at its execution point. (can be null to use default)
-     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
      * @see #submit()
      * @see net.vpg.rawf.api.exceptions.ErrorHandler
      */
@@ -531,8 +529,7 @@ public interface RestAction<T> {
      * <p><b>This might throw {@link java.lang.RuntimeException RuntimeExceptions}</b>
      *
      * @return The response value
-     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
-     * @throws IllegalStateException                           If used within a {@link #queue(Consumer, Consumer) queue(...)} callback
+     * @throws IllegalStateException If used within a {@link #queue(Consumer, Consumer) queue(...)} callback
      */
     default T complete() {
         return complete(true);
@@ -545,10 +542,9 @@ public interface RestAction<T> {
      *
      * @param shouldQueue Whether this should automatically handle rate limitations (default true)
      * @return The response value
-     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
-     * @throws IllegalStateException                           If used within a {@link #queue(Consumer, Consumer) queue(...)} callback
-     * @throws RateLimitedException                            If we were rate limited and the {@code shouldQueue} is false.
-     *                                                         Use {@link #complete()} to avoid this Exception.
+     * @throws IllegalStateException If used within a {@link #queue(Consumer, Consumer) queue(...)} callback
+     * @throws RateLimitedException  If we were rate limited and the {@code shouldQueue} is false.
+     *                               Use {@link #complete()} to avoid this Exception.
      */
     T complete(boolean shouldQueue);
 
@@ -575,7 +571,6 @@ public interface RestAction<T> {
      * }</pre>
      *
      * @return Never-null {@link java.util.concurrent.CompletableFuture} representing the completion promise
-     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
      */
     @Nonnull
     default CompletableFuture<T> submit() {
@@ -589,7 +584,6 @@ public interface RestAction<T> {
      *
      * @param shouldQueue Whether the Request should automatically handle rate limitations. (default true)
      * @return Never-null {@link java.util.concurrent.CompletableFuture} task representing the completion promise
-     * @throws java.util.concurrent.RejectedExecutionException If the requester has been shutdown by {@link RestApi#shutdown()} or {@link RestApi#shutdownNow()}
      */
     @Nonnull
     CompletableFuture<T> submit(boolean shouldQueue);
@@ -688,8 +682,6 @@ public interface RestAction<T> {
      * @param map       The mapping function which provides the fallback value to use
      * @return RestAction with fallback handling
      * @throws IllegalArgumentException If the mapping function is null
-     * @see ErrorResponse#test(Throwable)
-     * @see ErrorResponse#test(ErrorResponse...)
      * @since 4.2.0
      */
     @Nonnull
@@ -748,8 +740,6 @@ public interface RestAction<T> {
      * @param map       The mapping function which provides the fallback action to use
      * @return RestAction with fallback handling
      * @throws IllegalArgumentException If the mapping function is null
-     * @see ErrorResponse#test(Throwable)
-     * @see ErrorResponse#test(ErrorResponse...)
      * @since 4.2.0
      */
     @Nonnull
