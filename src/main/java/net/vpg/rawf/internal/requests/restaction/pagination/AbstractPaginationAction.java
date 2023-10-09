@@ -19,7 +19,7 @@ import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.requests.restaction.pagination.PaginationAction;
 import net.vpg.rawf.api.utils.Procedure;
 import net.vpg.rawf.internal.requests.RestActionImpl;
-import net.vpg.rawf.internal.requests.Route;
+import net.vpg.rawf.api.requests.Route;
 import net.vpg.rawf.internal.utils.Checks;
 
 import javax.annotation.Nonnull;

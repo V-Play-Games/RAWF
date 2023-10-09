@@ -17,10 +17,7 @@ package net.vpg.rawf.internal.requests;
 
 import net.vpg.rawf.api.RestApi;
 import net.vpg.rawf.api.exceptions.RateLimitedException;
-import net.vpg.rawf.api.requests.RestAction;
-import net.vpg.rawf.api.requests.RestFuture;
-import net.vpg.rawf.api.requests.RestRequest;
-import net.vpg.rawf.api.requests.RestResponse;
+import net.vpg.rawf.api.requests.*;
 import net.vpg.rawf.internal.utils.Checks;
 import net.vpg.rawf.internal.utils.Helpers;
 import net.vpg.rawf.internal.utils.RAWFLogger;

@@ -16,7 +16,6 @@
 package net.vpg.rawf.api.requests;
 
 import net.vpg.rawf.internal.requests.RestActionImpl;
-import net.vpg.rawf.internal.requests.Route;
 import okhttp3.RequestBody;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 

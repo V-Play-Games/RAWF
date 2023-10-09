@@ -1,60 +1,54 @@
 package net.vpg.rawf.api;
 
+import net.vpg.rawf.api.requests.RestConfig;
+import net.vpg.rawf.api.requests.RestRateLimiter;
 import net.vpg.rawf.internal.requests.Requester;
 import net.vpg.rawf.internal.utils.config.AuthorizationConfig;
-import net.vpg.rawf.internal.utils.config.ConnectionConfig;
+import net.vpg.rawf.internal.utils.config.ThreadingConfig;
 import okhttp3.OkHttpClient;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class RestApi {
-    protected final OkHttpClient httpClient;
     protected final Requester requester;
-    protected final ScheduledExecutorService callbackPool;
-    protected final ScheduledExecutorService rateLimitPool;
     protected final AuthorizationConfig authorizationConfig;
-    protected final ConnectionConfig connectionConfig;
-    protected long globalRateLimit;
+    protected final ThreadingConfig threadingConfig;
+    protected final RestConfig restConfig;
+    protected final RestRateLimiter.GlobalRateLimit globalRateLimit;
 
-    public RestApi(AuthorizationConfig authorizationConfig, ConnectionConfig connectionConfig) {
+    public RestApi(AuthorizationConfig authorizationConfig, ThreadingConfig threadingConfig, RestConfig restConfig) {
         this.authorizationConfig = authorizationConfig;
-        this.connectionConfig = connectionConfig;
-        httpClient = connectionConfig.getHttpClient();
-        requester = new Requester(this, authorizationConfig, connectionConfig);
-        callbackPool = new ScheduledThreadPoolExecutor(8);
-        rateLimitPool = new ScheduledThreadPoolExecutor(8);
+        this.threadingConfig = threadingConfig;
+        this.restConfig = restConfig;
+        this.globalRateLimit = RestRateLimiter.GlobalRateLimit.create();
+        RestRateLimiter ratelimiter = restConfig.getRateLimiterFactory().apply(
+            new RestRateLimiter.RateLimitConfig(
+                threadingConfig.getRateLimitPool(),
+                globalRateLimit,
+                restConfig.isRelativeRateLimit()
+            )
+        );
+        this.requester = new Requester(this, authorizationConfig, restConfig, ratelimiter);
     }
 
     public AuthorizationConfig getAuthorizationConfig() {
         return authorizationConfig;
     }
 
-    public ConnectionConfig getConnectionConfig() {
-        return connectionConfig;
+    public ThreadingConfig getThreadingConfig() {
+        return threadingConfig;
     }
 
-    public OkHttpClient getHttpClient() {
-        return httpClient;
+    public RestConfig getRestConfig() {
+        return restConfig;
     }
 
     public Requester getRequester() {
         return requester;
     }
 
-    public ScheduledExecutorService getCallbackPool() {
-        return callbackPool;
-    }
-
-    public ScheduledExecutorService getRateLimitPool() {
-        return rateLimitPool;
-    }
-
-    public long getGlobalRateLimit() {
+    public RestRateLimiter.GlobalRateLimit getGlobalRateLimit() {
         return globalRateLimit;
-    }
-
-    public void setGlobalRateLimit(long globalRateLimit) {
-        this.globalRateLimit = globalRateLimit;
     }
 }

@@ -16,27 +16,28 @@
 package net.vpg.rawf.internal.requests;
 
 import net.vpg.rawf.api.RestApi;
-import net.vpg.rawf.api.requests.RateLimiter;
-import net.vpg.rawf.api.requests.RestRequest;
-import net.vpg.rawf.api.requests.RestResponse;
-import net.vpg.rawf.internal.requests.ratelimit.DefaultRateLimiter;
+import net.vpg.rawf.api.requests.Route;
+import net.vpg.rawf.api.requests.*;
+import net.vpg.rawf.internal.utils.IOUtil;
 import net.vpg.rawf.internal.utils.RAWFLogger;
 import net.vpg.rawf.internal.utils.config.AuthorizationConfig;
-import net.vpg.rawf.internal.utils.config.ConnectionConfig;
+import net.vpg.vjson.value.JSONObject;
 import okhttp3.*;
 import okhttp3.internal.http.HttpMethod;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Consumer;
 
 public class Requester {
     public static final Logger LOGGER = RAWFLogger.getLog(Requester.class);
@@ -44,19 +45,24 @@ public class Requester {
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
     protected final RestApi api;
-    protected final AuthorizationConfig authorizationConfig;
-    protected final ConnectionConfig connectionConfig;
-    protected final RateLimiter rateLimiter;
+    protected final AuthorizationConfig authConfig;
+    private final RestRateLimiter rateLimiter;
+    private final String baseUrl;
+    private final String userAgent;
+    private final Consumer<? super Request.Builder> customBuilder;
 
-    protected final OkHttpClient httpClient;
-    protected volatile boolean retryOnTimeout = false;
+    private final OkHttpClient httpClient;
 
-    public Requester(RestApi api, AuthorizationConfig authorizationConfig, ConnectionConfig connectionConfig) {
+    private volatile boolean retryOnTimeout = false;
+
+    public Requester(RestApi api, AuthorizationConfig authConfig, RestConfig config, RestRateLimiter rateLimiter) {
+        this.authConfig = authConfig;
         this.api = api;
-        this.authorizationConfig = authorizationConfig;
-        this.connectionConfig = connectionConfig;
-        this.rateLimiter = new DefaultRateLimiter(this);
-        this.httpClient = api.getHttpClient();
+        this.rateLimiter = rateLimiter;
+        this.baseUrl = config.getBaseUrl();
+        this.userAgent = config.getUserAgent();
+        this.customBuilder = config.getCustomBuilder();
+        this.httpClient = api.getRestConfig().getHttpClient();
     }
 
     private static boolean isRetry(Throwable e) {
@@ -65,70 +71,64 @@ public class Requester {
             || e instanceof SSLPeerUnverifiedException; // SSL Certificate was wrong
     }
 
+    private static boolean shouldRetry(int code) {
+        return code == 502 || code == 504 || code == 529;
+    }
+
+    private static String getContentType(Response response) {
+        String type = response.header("content-type");
+        return type == null ? "" : type.toLowerCase(Locale.ROOT);
+    }
+
     public RestApi getApi() {
         return api;
     }
 
     public <T> void request(RestRequest<T> apiRequest) {
-        if (rateLimiter.isShutdown())
+        if (rateLimiter.isStopped())
             throw new RejectedExecutionException("The Requester has been stopped! No new requests can be requested!");
 
         if (apiRequest.shouldQueue())
-            rateLimiter.queueRequest(apiRequest);
+            rateLimiter.enqueue(new WorkTask(apiRequest));
         else
-            execute(apiRequest, true);
+            execute(new WorkTask(apiRequest), true);
     }
 
-    public long execute(RestRequest<?> apiRequest) {
-        return execute(apiRequest, false);
+    public Response execute(WorkTask task) {
+        return execute(task, false);
     }
 
     /**
      * Used to execute a Request. Processes request related to provided bucket.
      *
-     * @param apiRequest        The API request that needs to be sent
+     * @param task              The API request that needs to be sent
      * @param handleOnRateLimit Whether to forward rate-limits, false if rate limit handling should take over
      * @return Non-null if the request was ratelimited. Returns a Long containing retry_after milliseconds until
      * the request can be made again. This could either be for the Per-Route ratelimit or the Global ratelimit.
      * <br>Check if globalCooldown is {@code null} to determine if it was Per-Route or Global.
      */
-    public long execute(RestRequest<?> apiRequest, boolean handleOnRateLimit) {
-        return execute(apiRequest, false, handleOnRateLimit);
+    public Response execute(WorkTask task, boolean handleOnRateLimit) {
+        return execute(task, false, handleOnRateLimit);
     }
 
-    public long execute(RestRequest<?> apiRequest, boolean retried, boolean handleOnRatelimit) {
-        Route.CompiledRoute route = apiRequest.getRoute();
-        long retryAfter = rateLimiter.getRateLimit(route);
-        if (retryAfter > 0) {
-            if (handleOnRatelimit)
-                apiRequest.handleResponse(new RestResponse(retryAfter, Collections.emptySet()));
-            return retryAfter;
-        }
+    public Response execute(WorkTask task, boolean retried, boolean handleOnRatelimit) {
+        Route.CompiledRoute route = task.getRoute();
 
         Request.Builder builder = new Request.Builder();
 
-        String url = connectionConfig.getBaseUrl() + route.getCompiledRoute();
+        String url = baseUrl + route.getCompiledRoute();
         builder.url(url);
 
-        String method = apiRequest.getRoute().getMethod().toString();
-        RequestBody body = apiRequest.getBody();
+        RestRequest<?> apiRequest = task.request;
 
-        if (body == null && HttpMethod.requiresRequestBody(method))
-            body = EMPTY_BODY;
-
-        builder.method(method, body)
-            .header("user-agent", connectionConfig.getUserAgent())
-            .header("accept-encoding", "gzip")
-            .header("x-ratelimit-precision", "millisecond"); // still sending this in case of regressions
-
-        if (route.getBaseRoute().isAuthorizationRequired())
-            builder.header("authorization", authorizationConfig.getToken());
-
-        // Apply custom headers like X-Audit-Log-Reason
-        // If customHeaders is null this does nothing
-        Map<String, String> headers = apiRequest.getHeaders();
-        if (headers != null) {
-            headers.forEach(builder::addHeader);
+        applyBody(apiRequest, builder);
+        applyHeaders(apiRequest, builder);
+        if (customBuilder != null) {
+            try {
+                customBuilder.accept(builder);
+            } catch (Exception e) {
+                LOGGER.error("Custom request builder caused exception", e);
+            }
         }
 
         Request request = builder.build();
@@ -136,66 +136,83 @@ public class Requester {
         Set<String> rays = new LinkedHashSet<>();
         Response[] responses = new Response[4];
         // we have an array of all responses to later close them all at once
-        // the response below this comment is used as the first successful response from the server
-        Response lastResponse;
+        //the response below this comment is used as the first successful response from the server
+        Response lastResponse = null;
         try {
-            LOGGER.trace("Executing request {} {}", apiRequest.getRoute().getMethod(), url);
-            int attempt = 0;
-            do {
+            LOGGER.trace("Executing request {} {}", task.getRoute().getMethod(), url);
+            int code = 0;
+            for (int attempt = 0; attempt < responses.length; attempt++) {
                 if (apiRequest.isSkipped())
-                    return 0L;
+                    return null;
 
                 Call call = httpClient.newCall(request);
                 lastResponse = call.execute();
+                code = lastResponse.code();
                 responses[attempt] = lastResponse;
                 String cfRay = lastResponse.header("CF-RAY");
                 if (cfRay != null)
                     rays.add(cfRay);
 
-                if (lastResponse.code() < 500)
-                    break; // break loop, got a successful response!
+                // Retry a few specific server errors that are related to server issues
+                if (!shouldRetry(code))
+                    break;
 
-                attempt++;
                 LOGGER.debug("Requesting {} -> {} returned status {}... retrying (attempt {})",
                     apiRequest.getRoute().getMethod(),
-                    url, lastResponse.code(), attempt);
+                    url, code, attempt + 1);
                 try {
-                    // noinspection BusyWait
-                    Thread.sleep(50L * attempt);
+                    Thread.sleep(500 << attempt);
                 } catch (InterruptedException ignored) {
+                    break;
                 }
-            } while (attempt < 3 && lastResponse.code() >= 500);
-
-            LOGGER.trace("Finished Request {} {} with code {}", route.getMethod(), lastResponse.request().url(), lastResponse.code());
-
-            if (lastResponse.code() >= 500) {
-                // Epic failure from other end. Attempted 4 times.
-                RestResponse response = new RestResponse(lastResponse, -1, rays);
-                apiRequest.handleResponse(response);
-                return 0L;
             }
 
-            retryAfter = rateLimiter.handleResponse(route, lastResponse);
+            LOGGER.trace("Finished Request {} {} with code {}", route.getMethod(), lastResponse.request().url(), code);
+
+            if (shouldRetry(code)) {
+                //Epic failure from other end. Attempted 4 times.
+                task.handleResponse(lastResponse, -1, rays);
+                return null;
+            }
+
             if (!rays.isEmpty())
                 LOGGER.debug("Received response with following cf-rays: {}", rays);
 
-            if (retryAfter == 0)
-                apiRequest.handleResponse(new RestResponse(lastResponse, -1, rays));
-            else if (handleOnRatelimit)
-                apiRequest.handleResponse(new RestResponse(lastResponse, retryAfter, rays));
+            if (handleOnRatelimit && code == 429) {
+                long retryAfter = parseRetry(lastResponse);
+                task.handleResponse(lastResponse, retryAfter, rays);
+            } else if (code != 429) {
+                task.handleResponse(lastResponse, rays);
+            } else if (getContentType(lastResponse).startsWith("application/json")) // potentially not json when cloudflare does 429
+            {
+                // On 429, replace the retry-after header if its wrong (discord moment)
+                // We just pick whichever is bigger between body and header
+                try (InputStream body = IOUtil.getBody(lastResponse)) {
+                    long retryAfterBody = (long) Math.ceil(JSONObject.parse(body).getDouble("retry_after", 0));
+                    long retryAfterHeader = Long.parseLong(lastResponse.header(RestRateLimiter.RETRY_AFTER_HEADER));
+                    lastResponse = lastResponse.newBuilder()
+                        .header(RestRateLimiter.RETRY_AFTER_HEADER, Long.toString(Math.max(retryAfterHeader, retryAfterBody)))
+                        .build();
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to parse retry-after response body", e);
+                }
+            }
 
-            return retryAfter;
+            return lastResponse;
         } catch (UnknownHostException e) {
             LOGGER.error("DNS resolution failed: {}", e.getMessage());
-            apiRequest.handleResponse(new RestResponse(e, rays));
+            task.handleResponse(e, rays);
+            return null;
         } catch (IOException e) {
             if (retryOnTimeout && !retried && isRetry(e))
-                return execute(apiRequest, true, handleOnRatelimit);
+                return execute(task, true, handleOnRatelimit);
             LOGGER.error("There was an I/O error while executing a REST request: {}", e.getMessage());
-            apiRequest.handleResponse(new RestResponse(e, rays));
+            task.handleResponse(e, rays);
+            return null;
         } catch (Exception e) {
             LOGGER.error("There was an unexpected error while executing a REST request", e);
-            apiRequest.handleResponse(new RestResponse(e, rays));
+            task.handleResponse(e, rays);
+            return null;
         } finally {
             for (Response r : responses) {
                 if (r == null)
@@ -203,20 +220,36 @@ public class Requester {
                 r.close();
             }
         }
-        return 0L;
     }
 
     private void applyBody(RestRequest<?> apiRequest, Request.Builder builder) {
+        String method = apiRequest.getRoute().getMethod().toString();
+        RequestBody body = apiRequest.getBody();
+
+        if (body == null && HttpMethod.requiresRequestBody(method))
+            body = EMPTY_BODY;
+
+        builder.method(method, body);
     }
 
-    private void applyHeaders(RestRequest<?> apiRequest, Request.Builder builder, boolean authorized) {
+    private void applyHeaders(RestRequest<?> apiRequest, Request.Builder builder) {
+        builder.header("user-agent", userAgent)
+            .header("accept-encoding", "gzip")
+            .header("authorization", authConfig.getToken())
+            .header("x-ratelimit-precision", "millisecond"); // still sending this in case of regressions
+
+        // Apply custom headers like X-Audit-Log-Reason
+        // If customHeaders is null this does nothing
+        if (apiRequest.getHeaders() != null) {
+            apiRequest.getHeaders().forEach(builder::header);
+        }
     }
 
     public OkHttpClient getHttpClient() {
         return this.httpClient;
     }
 
-    public RateLimiter getRateLimiter() {
+    public RestRateLimiter getRateLimiter() {
         return rateLimiter;
     }
 
@@ -224,7 +257,78 @@ public class Requester {
         this.retryOnTimeout = retryOnTimeout;
     }
 
-    public void shutdown() {
-        rateLimiter.shutdown();
+    public void stop(boolean shutdown, Runnable callback) {
+        rateLimiter.stop(shutdown, callback);
+    }
+
+    private long parseRetry(Response response) {
+        String retryAfter = response.header(RestRateLimiter.RETRY_AFTER_HEADER, "0");
+        return (long) (Double.parseDouble(retryAfter) * 1000);
+    }
+
+    private class WorkTask implements RestRateLimiter.Work {
+        private final RestRequest<?> request;
+        private boolean done;
+
+        private WorkTask(RestRequest<?> request) {
+            this.request = request;
+        }
+
+        @Nonnull
+        @Override
+        public Route.CompiledRoute getRoute() {
+            return request.getRoute();
+        }
+
+        @Nonnull
+        @Override
+        public RestApi getApi() {
+            return request.getRestAction().getApi();
+        }
+
+        @Override
+        public Response execute() {
+            return Requester.this.execute(this);
+        }
+
+        @Override
+        public boolean isSkipped() {
+            return request.isSkipped();
+        }
+
+        @Override
+        public boolean isDone() {
+            return isSkipped() || done;
+        }
+
+        @Override
+        public boolean isPriority() {
+            return request.isPriority();
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return request.isCancelled();
+        }
+
+        @Override
+        public void cancel() {
+            request.cancel();
+        }
+
+        private void handleResponse(Response response, Set<String> rays) {
+            done = true;
+            request.handleResponse(new RestResponse(response, -1, rays));
+        }
+
+        private void handleResponse(Exception error, Set<String> rays) {
+            done = true;
+            request.handleResponse(new RestResponse(error, rays));
+        }
+
+        private void handleResponse(Response response, long retryAfter, Set<String> cfRays) {
+            done = true;
+            request.handleResponse(new RestResponse(response, retryAfter, cfRays));
+        }
     }
 }

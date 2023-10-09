@@ -15,7 +15,7 @@
  */
 package net.vpg.rawf.api.exceptions;
 
-import net.vpg.rawf.internal.requests.Route;
+import net.vpg.rawf.api.requests.Route;
 import net.vpg.rawf.internal.utils.Helpers;
 
 /**
@@ -26,7 +26,7 @@ public class RateLimitedException extends HttpException {
     private final long retryAfter;
 
     public RateLimitedException(Route.CompiledRoute route, long retryAfter) {
-        this(route.getBaseRoute().getRoute() + ":" + route.getParams(), retryAfter);
+        this(route.getCompiledRoute(), retryAfter);
     }
 
     public RateLimitedException(String route, long retryAfter) {

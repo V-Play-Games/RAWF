@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.vpg.rawf.internal.requests.ratelimit;
+package net.vpg.rawf.api.requests;
 
-import net.vpg.rawf.api.requests.RestRequest;
-
-import java.util.Queue;
-
-public interface IBucket {
-    Queue<RestRequest<?>> getRequests();
+public enum Method {
+    DELETE,
+    GET,
+    HEAD,
+    OPTIONS,
+    POST,
+    PUT,
+    PATCH
 }

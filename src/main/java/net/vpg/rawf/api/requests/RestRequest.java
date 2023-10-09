@@ -20,7 +20,6 @@ import net.vpg.rawf.api.exceptions.ContextException;
 import net.vpg.rawf.api.exceptions.RateLimitedException;
 import net.vpg.rawf.internal.requests.CallbackContext;
 import net.vpg.rawf.internal.requests.RestActionImpl;
-import net.vpg.rawf.internal.requests.Route;
 import okhttp3.RequestBody;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
@@ -72,8 +71,7 @@ public class RestRequest<T> {
         if (done)
             return;
         done = true;
-        api.getCallbackPool().execute(() ->
-        {
+        api.getThreadingConfig().getCallbackPool().execute(() -> {
             try (CallbackContext ___ = CallbackContext.getInstance()) {
                 onSuccess.accept(successObj);
             } catch (Throwable t) {
@@ -89,7 +87,6 @@ public class RestRequest<T> {
     public void onFailure(RestResponse response) {
         if (response.code == 429) {
             onFailure(new RateLimitedException(route, response.retryAfter));
-        } else {
         }
     }
 
@@ -97,8 +94,7 @@ public class RestRequest<T> {
         if (done)
             return;
         done = true;
-        api.getCallbackPool().execute(() ->
-        {
+        api.getThreadingConfig().getCallbackPool().execute(() -> {
             try (CallbackContext ___ = CallbackContext.getInstance()) {
                 onFailure.accept(failException);
             } catch (Throwable t) {
@@ -187,7 +183,10 @@ public class RestRequest<T> {
     }
 
     public void cancel() {
-        this.isCancelled = true;
+        if (!isCancelled) {
+            onCancelled();
+            isCancelled = true;
+        }
     }
 
     public boolean isCancelled() {

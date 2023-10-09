@@ -931,7 +931,7 @@ public interface RestAction<T> {
      * }</pre>
      *
      * @param duration  The delay
-     * @param scheduler The scheduler to use, null to use {@link RestApi#getRateLimitPool()}
+     * @param scheduler The scheduler to use, null to use {@link net.vpg.rawf.internal.utils.config.ThreadingConfig#getRateLimitPool()}
      * @return RestAction with delay
      * @see #queueAfter(long, TimeUnit, ScheduledExecutorService)
      * @since 4.1.1
@@ -989,7 +989,7 @@ public interface RestAction<T> {
      *
      * @param delay     The delay value
      * @param unit      The time unit for the delay value
-     * @param scheduler The scheduler to use, null to use {@link RestApi#getRateLimitPool()}
+     * @param scheduler The scheduler to use, null to use {@link net.vpg.rawf.internal.utils.config.ThreadingConfig#getRateLimitPool()}
      * @return RestAction with delay
      * @see #queueAfter(long, TimeUnit, ScheduledExecutorService)
      * @since 4.1.1
@@ -1046,7 +1046,7 @@ public interface RestAction<T> {
     default DelayedCompletableFuture<T> submitAfter(long delay, TimeUnit unit, @Nullable ScheduledExecutorService executor) {
         Checks.notNull(unit, "TimeUnit");
         if (executor == null)
-            executor = getApi().getRateLimitPool();
+            executor = getApi().getThreadingConfig().getRateLimitPool();
         return DelayedCompletableFuture.make(executor, delay, unit,
             task -> {
                 Consumer<? super Throwable> onFailure = ContextException.wrapIfApplicable(task::completeExceptionally);
@@ -1224,7 +1224,7 @@ public interface RestAction<T> {
     default ScheduledFuture<?> queueAfter(long delay, TimeUnit unit, @Nullable Consumer<? super T> success, @Nullable Consumer<? super Throwable> failure, @Nullable ScheduledExecutorService executor) {
         Checks.notNull(unit, "TimeUnit");
         if (executor == null)
-            executor = getApi().getRateLimitPool();
+            executor = getApi().getThreadingConfig().getRateLimitPool();
         Consumer<? super Throwable> onFailure = ContextException.wrapIfApplicable(failure);
         Runnable task = () -> queue(success, onFailure);
         return executor.schedule(task, delay, unit);
