@@ -5,10 +5,6 @@ import net.vpg.rawf.api.requests.RestRateLimiter;
 import net.vpg.rawf.internal.requests.Requester;
 import net.vpg.rawf.internal.utils.config.AuthorizationConfig;
 import net.vpg.rawf.internal.utils.config.ThreadingConfig;
-import okhttp3.OkHttpClient;
-
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class RestApi {
     protected final Requester requester;

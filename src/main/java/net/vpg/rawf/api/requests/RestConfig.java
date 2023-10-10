@@ -50,6 +50,16 @@ public class RestConfig {
     }
 
     /**
+     * The adapted user-agent with the custom {@link #setUserAgent(String) suffix}.
+     *
+     * @return The user-agent
+     */
+    @Nonnull
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    /**
      * Provide a custom User-Agent.
      *
      * @param userAgent The new User-Agent
@@ -60,16 +70,6 @@ public class RestConfig {
         Checks.notBlank(userAgent, "User Agent");
         this.userAgent = userAgent;
         return this;
-    }
-
-    /**
-     * The adapted user-agent with the custom {@link #setUserAgent(String) suffix}.
-     *
-     * @return The user-agent
-     */
-    @Nonnull
-    public String getUserAgent() {
-        return userAgent;
     }
 
     /**

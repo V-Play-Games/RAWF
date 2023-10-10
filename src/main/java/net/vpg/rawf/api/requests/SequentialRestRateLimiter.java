@@ -77,7 +77,7 @@ public final class SequentialRestRateLimiter implements RestRateLimiter {
     private final Set<Route> hitRatelimit = new HashSet<>(5);
     // Route -> Hash
     private final Map<Route, String> hashes = new HashMap<>();
-    // Hash + Major Parameter -> Bucket
+    // Hash + Route -> Bucket
     private final Map<String, Bucket> buckets = new HashMap<>();
     // Bucket -> Rate-Limit Worker
     private final Map<Bucket, Future<?>> rateLimitQueue = new HashMap<>();
@@ -105,13 +105,15 @@ public final class SequentialRestRateLimiter implements RestRateLimiter {
                 isStopped = true;
                 shutdownHandle.thenRun(callback);
                 if (!doShutdown) {
-                    int count = buckets.values().stream()
-                        .mapToInt(bucket -> bucket.getRequests().size())
+                    int count = buckets.values()
+                        .stream()
+                        .map(Bucket::getRequests)
+                        .mapToInt(Collection::size)
                         .sum();
-
-                    if (count > 0)
-                        log.info("Waiting for {} requests to finish.", count);
                     doShutdown = count == 0;
+
+                    if (!doShutdown)
+                        log.info("Waiting for {} requests to finish.", count);
                 }
             }
             if (doShutdown && !isShutdown)

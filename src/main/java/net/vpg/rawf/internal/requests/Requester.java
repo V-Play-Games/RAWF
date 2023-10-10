@@ -33,9 +33,7 @@ import java.io.InputStream;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.LinkedHashSet;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 
@@ -133,7 +131,6 @@ public class Requester {
 
         Request request = builder.build();
 
-        Set<String> rays = new LinkedHashSet<>();
         Response[] responses = new Response[4];
         // we have an array of all responses to later close them all at once
         //the response below this comment is used as the first successful response from the server
@@ -149,9 +146,6 @@ public class Requester {
                 lastResponse = call.execute();
                 code = lastResponse.code();
                 responses[attempt] = lastResponse;
-                String cfRay = lastResponse.header("CF-RAY");
-                if (cfRay != null)
-                    rays.add(cfRay);
 
                 // Retry a few specific server errors that are related to server issues
                 if (!shouldRetry(code))
@@ -171,25 +165,21 @@ public class Requester {
 
             if (shouldRetry(code)) {
                 //Epic failure from other end. Attempted 4 times.
-                task.handleResponse(lastResponse, -1, rays);
+                task.handleResponse(lastResponse, -1);
                 return null;
             }
 
-            if (!rays.isEmpty())
-                LOGGER.debug("Received response with following cf-rays: {}", rays);
-
             if (handleOnRatelimit && code == 429) {
                 long retryAfter = parseRetry(lastResponse);
-                task.handleResponse(lastResponse, retryAfter, rays);
+                task.handleResponse(lastResponse, retryAfter);
             } else if (code != 429) {
-                task.handleResponse(lastResponse, rays);
-            } else if (getContentType(lastResponse).startsWith("application/json")) // potentially not json when cloudflare does 429
-            {
+                task.handleResponse(lastResponse);
+            } else if (getContentType(lastResponse).startsWith("application/json")) { // potentially not json when cloudflare does 429
                 // On 429, replace the retry-after header if its wrong (discord moment)
                 // We just pick whichever is bigger between body and header
                 try (InputStream body = IOUtil.getBody(lastResponse)) {
                     long retryAfterBody = (long) Math.ceil(JSONObject.parse(body).getDouble("retry_after", 0));
-                    long retryAfterHeader = Long.parseLong(lastResponse.header(RestRateLimiter.RETRY_AFTER_HEADER));
+                    long retryAfterHeader = parseRetry(lastResponse);
                     lastResponse = lastResponse.newBuilder()
                         .header(RestRateLimiter.RETRY_AFTER_HEADER, Long.toString(Math.max(retryAfterHeader, retryAfterBody)))
                         .build();
@@ -201,17 +191,17 @@ public class Requester {
             return lastResponse;
         } catch (UnknownHostException e) {
             LOGGER.error("DNS resolution failed: {}", e.getMessage());
-            task.handleResponse(e, rays);
+            task.handleResponse(e);
             return null;
         } catch (IOException e) {
             if (retryOnTimeout && !retried && isRetry(e))
                 return execute(task, true, handleOnRatelimit);
             LOGGER.error("There was an I/O error while executing a REST request: {}", e.getMessage());
-            task.handleResponse(e, rays);
+            task.handleResponse(e);
             return null;
         } catch (Exception e) {
             LOGGER.error("There was an unexpected error while executing a REST request", e);
-            task.handleResponse(e, rays);
+            task.handleResponse(e);
             return null;
         } finally {
             for (Response r : responses) {
@@ -223,7 +213,7 @@ public class Requester {
     }
 
     private void applyBody(RestRequest<?> apiRequest, Request.Builder builder) {
-        String method = apiRequest.getRoute().getMethod().toString();
+        String method = apiRequest.getRoute().getMethod();
         RequestBody body = apiRequest.getBody();
 
         if (body == null && HttpMethod.requiresRequestBody(method))
@@ -246,7 +236,7 @@ public class Requester {
     }
 
     public OkHttpClient getHttpClient() {
-        return this.httpClient;
+        return httpClient;
     }
 
     public RestRateLimiter getRateLimiter() {
@@ -262,8 +252,8 @@ public class Requester {
     }
 
     private long parseRetry(Response response) {
-        String retryAfter = response.header(RestRateLimiter.RETRY_AFTER_HEADER, "0");
-        return (long) (Double.parseDouble(retryAfter) * 1000);
+        //noinspection ConstantConditions
+        return (long) (Double.parseDouble(response.header(RestRateLimiter.RETRY_AFTER_HEADER, "0")) * 1000);
     }
 
     private class WorkTask implements RestRateLimiter.Work {
@@ -316,19 +306,21 @@ public class Requester {
             request.cancel();
         }
 
-        private void handleResponse(Response response, Set<String> rays) {
-            done = true;
-            request.handleResponse(new RestResponse(response, -1, rays));
+        private void handleResponse(Response response) {
+            handleResponse(new RestResponse(response, -1));
         }
 
-        private void handleResponse(Exception error, Set<String> rays) {
-            done = true;
-            request.handleResponse(new RestResponse(error, rays));
+        private void handleResponse(Exception error) {
+            handleResponse(new RestResponse(error));
         }
 
-        private void handleResponse(Response response, long retryAfter, Set<String> cfRays) {
+        private void handleResponse(Response response, long retryAfter) {
+            handleResponse(new RestResponse(response, retryAfter));
+        }
+
+        private void handleResponse(RestResponse response) {
             done = true;
-            request.handleResponse(new RestResponse(response, retryAfter, cfRays));
+            request.handleResponse(response);
         }
     }
 }

@@ -27,7 +27,6 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.*;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @ParametersAreNonnullByDefault
@@ -40,24 +39,22 @@ public class RestResponse implements Closeable {
     public final long retryAfter;
     private final InputStream body;
     private final Response rawResponse;
-    private final Set<String> cfRays;
     private String fallbackString;
     private Object object;
     private boolean attemptedParsing = false;
     private Exception exception;
 
-    public RestResponse(Exception exception, Set<String> cfRays) {
-        this(null, ERROR_CODE, ERROR_MESSAGE, -1, cfRays);
+    public RestResponse(Exception exception) {
+        this(null, ERROR_CODE, ERROR_MESSAGE, -1);
         this.exception = exception;
     }
 
-    public RestResponse(@Nullable Response response, int code, String message, long retryAfter, Set<String> cfRays) {
+    public RestResponse(@Nullable Response response, int code, String message, long retryAfter) {
         this.rawResponse = response;
         this.code = code;
         this.message = message;
         this.exception = null;
         this.retryAfter = retryAfter;
-        this.cfRays = cfRays;
 
         if (response == null) {
             this.body = null;
@@ -70,12 +67,12 @@ public class RestResponse implements Closeable {
         }
     }
 
-    public RestResponse(long retryAfter, Set<String> cfRays) {
-        this(null, 429, "TOO MANY REQUESTS", retryAfter, cfRays);
+    public RestResponse(long retryAfter) {
+        this(null, 429, "TOO MANY REQUESTS", retryAfter);
     }
 
-    public RestResponse(Response response, long retryAfter, Set<String> cfRays) {
-        this(response, response.code(), response.message(), retryAfter, cfRays);
+    public RestResponse(Response response, long retryAfter) {
+        this(response, response.code(), response.message(), retryAfter);
     }
 
     @Nonnull
@@ -111,11 +108,6 @@ public class RestResponse implements Closeable {
     @Nullable
     public Response getRawResponse() {
         return this.rawResponse;
-    }
-
-    @Nonnull
-    public Set<String> getCFRays() {
-        return cfRays;
     }
 
     @Nullable

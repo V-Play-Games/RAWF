@@ -24,16 +24,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
 
-import static net.vpg.rawf.api.requests.Method.*;
-
 @ParametersAreNonnullByDefault
 public class Route {
-    private final Method method;
+    private final String method;
     private final int paramCount;
     private final boolean requireAuth;
     private final String[] template;
 
-    private Route(Method method, String route, boolean requireAuth) {
+    private Route(String method, String route, boolean requireAuth) {
         this.method = method;
         this.requireAuth = requireAuth;
         this.template = route.split("/");
@@ -70,7 +68,7 @@ public class Route {
      * <p>
      * For example, to compose the route to create a message in a channel:
      * <pre>{@code
-     * Route route = Route.custom(Method.POST, "channels/{channel_id}/messages");
+     * Route route = Route.custom(String.POST, "channels/{channel_id}/messages");
      * }</pre>
      *
      * <p>To compile the route, use {@link #compile(String...)} with the positional arguments.
@@ -84,15 +82,15 @@ public class Route {
      * @throws IllegalArgumentException If null is provided or the route is invalid (containing spaces or empty)
      */
     @Nonnull
-    public static Route custom(Method method, String route, boolean requireAuth) {
-        Checks.notNull(method, "Method");
+    public static Route custom(String method, String route, boolean requireAuth) {
+        Checks.notNull(method, "String");
         Checks.notEmpty(route, "Route");
         Checks.noWhitespace(route, "Route");
         return new Route(method, route, requireAuth);
     }
 
     /**
-     * Create a route template for the with the {@link Method#DELETE DELETE} method.
+     * Create a route template for the with the DELETE method.
      *
      * <p>Route syntax should include valid argument placeholders of the format: {@code '{' argument_name '}'}
      * <br>The rate-limit handling in JDA relies on the correct names of major parameters:
@@ -105,7 +103,7 @@ public class Route {
      * <p>
      * For example, to compose the route to delete a message in a channel:
      * <pre>{@code
-     * Route route = Route.custom(Method.DELETE, "channels/{channel_id}/messages/{message_id}");
+     * Route route = Route.custom(String.DELETE, "channels/{channel_id}/messages/{message_id}");
      * }</pre>
      *
      * <p>To compile the route, use {@link #compile(String...)} with the positional arguments.
@@ -119,11 +117,11 @@ public class Route {
      */
     @Nonnull
     public static Route delete(String route, boolean requireAuth) {
-        return custom(DELETE, route, requireAuth);
+        return custom("DELETE", route, requireAuth);
     }
 
     /**
-     * Create a route template for the with the {@link Method#POST POST} method.
+     * Create a route template for the with the POST method.
      *
      * <p>Route syntax should include valid argument placeholders of the format: {@code '{' argument_name '}'}
      * <br>The rate-limit handling in JDA relies on the correct names of major parameters:
@@ -136,7 +134,7 @@ public class Route {
      * <p>
      * For example, to compose the route to create a message in a channel:
      * <pre>{@code
-     * Route route = Route.custom(Method.POST, "channels/{channel_id}/messages");
+     * Route route = Route.custom(String.POST, "channels/{channel_id}/messages");
      * }</pre>
      *
      * <p>To compile the route, use {@link #compile(String...)} with the positional arguments.
@@ -150,11 +148,11 @@ public class Route {
      */
     @Nonnull
     public static Route post(String route, boolean requireAuth) {
-        return custom(POST, route, requireAuth);
+        return custom("POST", route, requireAuth);
     }
 
     /**
-     * Create a route template for the with the {@link Method#PUT PUT} method.
+     * Create a route template for the with the PUT method.
      *
      * <p>Route syntax should include valid argument placeholders of the format: {@code '{' argument_name '}'}
      * <br>The rate-limit handling in JDA relies on the correct names of major parameters:
@@ -167,7 +165,7 @@ public class Route {
      * <p>
      * For example, to compose the route to ban a user in a guild:
      * <pre>{@code
-     * Route route = Route.custom(Method.PUT, "guilds/{guild_id}/bans/{user_id}");
+     * Route route = Route.custom(String.PUT, "guilds/{guild_id}/bans/{user_id}");
      * }</pre>
      *
      * <p>To compile the route, use {@link #compile(String...)} with the positional arguments.
@@ -181,11 +179,11 @@ public class Route {
      */
     @Nonnull
     public static Route put(String route, boolean requireAuth) {
-        return custom(PUT, route, requireAuth);
+        return custom("PUT", route, requireAuth);
     }
 
     /**
-     * Create a route template for the with the {@link Method#PATCH PATCH} method.
+     * Create a route template for the with the PATCH method.
      *
      * <p>Route syntax should include valid argument placeholders of the format: {@code '{' argument_name '}'}
      * <br>The rate-limit handling in JDA relies on the correct names of major parameters:
@@ -198,7 +196,7 @@ public class Route {
      * <p>
      * For example, to compose the route to edit a message in a channel:
      * <pre>{@code
-     * Route route = Route.custom(Method.PATCH, "channels/{channel_id}/messages/{message_id}");
+     * Route route = Route.custom(String.PATCH, "channels/{channel_id}/messages/{message_id}");
      * }</pre>
      *
      * <p>To compile the route, use {@link #compile(String...)} with the positional arguments.
@@ -212,11 +210,11 @@ public class Route {
      */
     @Nonnull
     public static Route patch(String route, boolean requireAuth) {
-        return custom(PATCH, route, requireAuth);
+        return custom("PATCH", route, requireAuth);
     }
 
     /**
-     * Create a route template for the with the {@link Method#GET GET} method.
+     * Create a route template for the with the GET method.
      *
      * <p>Route syntax should include valid argument placeholders of the format: {@code '{' argument_name '}'}
      * <br>The rate-limit handling in JDA relies on the correct names of major parameters:
@@ -229,7 +227,7 @@ public class Route {
      * <p>
      * For example, to compose the route to get a message in a channel:
      * <pre>{@code
-     * Route route = Route.custom(Method.GET, "channels/{channel_id}/messages/{message_id}");
+     * Route route = Route.custom(String.GET, "channels/{channel_id}/messages/{message_id}");
      * }</pre>
      *
      * <p>To compile the route, use {@link #compile(String...)} with the positional arguments.
@@ -243,17 +241,17 @@ public class Route {
      */
     @Nonnull
     public static Route get(String route, boolean requireAuth) {
-        return custom(GET, route, requireAuth);
+        return custom("GET", route, requireAuth);
     }
 
     /**
-     * The {@link Method} of this route template.
+     * The {@link String} of this route template.
      * <br>Multiple routes with different HTTP methods can share a rate-limit.
      *
      * @return The HTTP method
      */
     @Nonnull
-    public Method getMethod() {
+    public String getString() {
         return method;
     }
 
@@ -429,13 +427,13 @@ public class Route {
          * @return The HTTP method
          */
         @Nonnull
-        public Method getMethod() {
+        public String getMethod() {
             return baseRoute.method;
         }
 
         @Override
         public int hashCode() {
-            return (compiledRoute + method.toString()).hashCode();
+            return (compiledRoute + method).hashCode();
         }
 
         @Override
