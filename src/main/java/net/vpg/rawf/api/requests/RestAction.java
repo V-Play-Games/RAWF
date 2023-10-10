@@ -1049,8 +1049,7 @@ public interface RestAction<T> {
             executor = getApi().getThreadingConfig().getRateLimitPool();
         return DelayedCompletableFuture.make(executor, delay, unit,
             task -> {
-                Consumer<? super Throwable> onFailure = ContextException.wrapIfApplicable(task::completeExceptionally);
-                return () -> queue(task::complete, onFailure);
+                return () -> queue(task::complete, ContextException.wrapIfApplicable(task::completeExceptionally));
             });
     }
 

@@ -48,30 +48,13 @@ public class DelayedCompletableFuture<T> extends CompletableFuture<T> implements
     @Nonnull
     public static <E> DelayedCompletableFuture<E> make(ScheduledExecutorService executor, long delay, TimeUnit unit, Function<? super DelayedCompletableFuture<E>, ? extends Runnable> mapping) {
         DelayedCompletableFuture<E> handle = new DelayedCompletableFuture<>();
-        ScheduledFuture<?> future = executor.schedule(mapping.apply(handle), delay, unit);
-        handle.initProxy(future);
+        handle.future = executor.schedule(mapping.apply(handle), delay, unit);
         return handle;
-    }
-
-    /**
-     * Initializes the backing scheduled task for this promise.
-     *
-     * <p>The provided future will be cancelled when {@link #cancel(boolean)} is invoked
-     * and is used as provider for {@link #getDelay(TimeUnit)}.
-     *
-     * @param future The future that should be cancelled when this task is cancelled
-     * @throws IllegalStateException If this was already initialized
-     */
-    private void initProxy(ScheduledFuture<?> future) {
-        if (this.future == null)
-            this.future = future;
-        else
-            throw new IllegalStateException("Cannot initialize twice");
     }
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        if (future != null && !future.isDone())
+        if (!future.isDone())
             future.cancel(mayInterruptIfRunning);
         return super.cancel(mayInterruptIfRunning);
     }
